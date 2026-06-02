@@ -1,0 +1,402 @@
+/**
+ * Phone layout — tuned for iPhone 17 class devices (~393×852 CSS px portrait)
+ * and similar phones (max width ~430px). Also improves touch targets on coarse pointers.
+ */
+
+:root {
+  --phone-max: 430px;
+  --touch-min: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* Prevent iOS zoom on focus (needs ≥16px on inputs) */
+@media (max-width: 430px) {
+  input[type="text"],
+  input[type="number"],
+  select {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 430px) {
+  .app {
+    max-width: 100%;
+    padding:
+      calc(0.75rem + var(--safe-top))
+      calc(0.65rem + var(--safe-right))
+      calc(1.5rem + var(--safe-bottom))
+      calc(0.65rem + var(--safe-left));
+  }
+
+  header {
+    margin-bottom: 1.25rem;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  header p {
+    font-size: 0.9rem;
+  }
+
+  .card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+  }
+
+  .view-toolbar {
+    margin-bottom: 0.75rem;
+  }
+
+  .btn-back {
+    min-height: var(--touch-min);
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .btn {
+    min-height: var(--touch-min);
+    padding: 0.7rem 1rem;
+  }
+
+  .btn-row,
+  .confirm-dialog-actions,
+  .settings-dialog-actions,
+  .game-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .btn-row .btn,
+  .confirm-dialog-actions .btn,
+  .settings-dialog-actions .btn,
+  .game-actions .btn {
+    width: 100%;
+  }
+
+  .game-picker {
+    gap: 0.5rem;
+  }
+
+  .game-card {
+    padding: 0.85rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .game-card-icon {
+    font-size: 1.75rem;
+  }
+
+  .game-card-name {
+    font-size: 1rem;
+  }
+
+  .game-card-desc {
+    font-size: 0.85rem;
+  }
+
+  .profiles-saved-block {
+    padding: 0.85rem;
+  }
+
+  .profile-list-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  .profile-list-name {
+    min-width: 0;
+    font-size: 1rem;
+  }
+
+  .profile-list-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .profile-list-actions .btn,
+  .profile-save-btn,
+  .profile-cancel-btn,
+  .profile-edit-btn,
+  .profile-delete-btn {
+    min-height: var(--touch-min);
+  }
+
+  .btn-favorite-toggle {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+    align-self: flex-start;
+  }
+
+  .add-profile-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-profile-row .btn {
+    width: 100%;
+  }
+
+  .profile-chip-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-chip {
+    flex: none;
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 0.65rem 1rem;
+    font-size: 1rem;
+  }
+
+  .btn-profile-open {
+    width: 100%;
+    min-height: var(--touch-min);
+    justify-content: center;
+  }
+
+  .profiles-other-select {
+    min-height: var(--touch-min);
+  }
+
+  .player-input-row button {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+  }
+
+  .roster-player {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+  }
+
+  .roster-player-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .roster-guest {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .roster-guest .btn {
+    width: 100%;
+    min-height: var(--touch-min);
+  }
+
+  .leader-banner {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .round-preview {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 0.35rem;
+    margin-right: -0.25rem;
+  }
+
+  .round-preview button,
+  .round-preview span {
+    flex-shrink: 0;
+    min-height: 2rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .round-schedule {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.35rem;
+  }
+
+  .round-schedule-item input {
+    width: 3.5rem;
+    min-height: var(--touch-min);
+    font-size: 16px;
+  }
+
+  .scoreboard-table-wrap {
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -0.25rem;
+    padding: 0 0.25rem;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+
+  th,
+  td {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .player-score-card {
+    padding: 0.85rem;
+  }
+
+  .round-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .round-detail-header .btn {
+    width: 100%;
+  }
+
+  .confirm-dialog {
+    padding:
+      calc(0.75rem + var(--safe-top))
+      calc(0.75rem + var(--safe-right))
+      calc(0.75rem + var(--safe-bottom))
+      calc(0.75rem + var(--safe-left));
+    align-items: flex-end;
+  }
+
+  .confirm-dialog-panel {
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .settings-dialog {
+    padding:
+      var(--safe-top)
+      calc(0.5rem + var(--safe-right))
+      calc(0.5rem + var(--safe-bottom))
+      calc(0.5rem + var(--safe-left));
+  }
+
+  .settings-dialog-panel {
+    width: 100%;
+    margin: 0;
+    max-height: none;
+  }
+
+  .settings-dialog-header .btn {
+    min-width: var(--touch-min);
+    min-height: var(--touch-min);
+  }
+
+  .game-over {
+    padding: 1rem 0.5rem;
+  }
+
+  .final-standings li {
+    padding: 0.65rem 0.25rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Rook — hand scoring on a narrow screen */
+@media (max-width: 430px) {
+  body[data-theme="rook"] .rook-team-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body[data-theme="rook"] .rook-team-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  body[data-theme="rook"] .rook-team-toggle {
+    flex: 1;
+    min-height: var(--touch-min);
+    font-size: 0.9rem;
+  }
+
+  body[data-theme="rook"] .rook-bid-label .value-stepper {
+    gap: 0.35rem;
+  }
+
+  body[data-theme="rook"] .value-stepper .stepper-btn {
+    min-width: 3rem;
+    min-height: var(--touch-min);
+    flex: 0 0 auto;
+  }
+
+  body[data-theme="rook"] .value-stepper .stepper-value {
+    font-size: 1.5rem;
+  }
+
+  body[data-theme="rook"] .rook-hand-form .btn-row {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 0 -1rem -1rem;
+    padding: 0.75rem 1rem calc(0.75rem + var(--safe-bottom));
+    background: linear-gradient(to top, var(--bg-card) 85%, transparent);
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Flip 7 — larger card picker targets */
+@media (max-width: 430px) {
+  body[data-theme="flip7"] .flip7-player-card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body[data-theme="flip7"] .flip7-bust-btn {
+    margin-left: 0;
+    width: 100%;
+    min-height: var(--touch-min);
+  }
+
+  body[data-theme="flip7"] .flip7-pick-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+    gap: 0.45rem;
+  }
+
+  body[data-theme="flip7"] .flip7-pick-btn {
+    min-height: var(--touch-min);
+    min-width: 0;
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  #round-form .btn-row,
+  body[data-theme="flip7"] #flip7-round-form .btn-row {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 0 -1rem -1rem;
+    padding: 0.75rem 1rem calc(0.75rem + var(--safe-bottom));
+    background: linear-gradient(to top, var(--bg-card) 85%, transparent);
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Coarse pointer (touch) — ensure tap targets even on slightly wider phones */
+@media (hover: none) and (pointer: coarse) {
+  .round-preview button,
+  th.round-link,
+  td.round-link {
+    min-height: 2.25rem;
+    min-width: 2.25rem;
+  }
+
+  .profile-chip,
+  .game-card:not(:disabled) {
+    -webkit-tap-highlight-color: rgba(212, 168, 67, 0.2);
+  }
+}

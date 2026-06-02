@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#0a1628" />
+    <title>Game Scorer</title>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/games/flip7.css" />
+    <link rel="stylesheet" href="css/games/rook.css" />
+    <link rel="stylesheet" href="css/mobile.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1 id="app-title">Game Scorer</h1>
+        <p id="app-subtitle">Choose a game to start scoring</p>
+      </header>
+
+      <section id="home-view" class="card">
+        <h2>Which game are you playing?</h2>
+        <p class="hint">Pick a game below. More scorekeepers will be added over time.</p>
+        <div id="game-picker" class="game-picker"></div>
+      </section>
+
+      <section id="profiles-view" class="card">
+        <h2>Household players</h2>
+        <p class="hint">
+          Save names you play with often (e.g. Mom, Dad, Tyson). Star favorites to show them here and in game setup; everyone else stays in the menu below.
+        </p>
+
+        <div class="profiles-saved-block">
+          <h3 class="profiles-saved-heading">Favorites</h3>
+          <p id="profiles-empty-hint" class="hint profiles-empty-hint">No saved players yet — add a name below.</p>
+          <p id="profiles-favorites-empty-hint" class="hint profiles-favorites-empty hidden">
+            No favorites yet. Star a player after you open them from Other household players, or add a new name below.
+          </p>
+          <div id="profiles-favorites-list" class="profiles-list" aria-live="polite"></div>
+          <div id="profiles-other-dropdown-host"></div>
+          <div id="profiles-other-detail" class="profiles-other-detail hidden" aria-live="polite"></div>
+        </div>
+
+        <form id="add-profile-form" class="add-profile-form">
+          <h3 class="profiles-add-heading">Add a player</h3>
+          <div class="add-profile-row">
+            <label class="visually-hidden" for="add-profile-name">Player name</label>
+            <input
+              type="text"
+              id="add-profile-name"
+              name="profileName"
+              placeholder="Player name"
+              maxlength="24"
+              autocomplete="name"
+              required
+            />
+            <button type="submit" id="add-profile-save-btn" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="player-profile-view" class="card hidden">
+        <div class="view-toolbar">
+          <button type="button" id="player-profile-back-btn" class="btn btn-secondary btn-back">
+            ← Back
+          </button>
+        </div>
+        <h2 id="player-profile-title">Player</h2>
+        <p class="hint">Individual player stats and history.</p>
+        <div class="setup-section">
+          <h3>Game history</h3>
+          <p id="player-profile-coming-soon" class="hint coming-soon-note">Coming soon — game history is not connected yet.</p>
+          <div id="player-profile-history" class="player-profile-history"></div>
+        </div>
+      </section>
+
+      <!-- Setup -->
+      <section id="setup-view" class="card hidden">
+        <div class="view-toolbar">
+          <button type="button" id="back-to-home-btn" class="btn btn-secondary btn-back">
+            ← All games
+          </button>
+        </div>
+
+        <div id="skull-king-setup">
+          <h2 id="setup-title">New Skull King Game</h2>
+          <p class="hint">Choose who is playing (saved household players or guests), configure rounds, then start the game.</p>
+          <label class="setup-option">
+            <input type="checkbox" id="use-expansion-checkbox" />
+            Using expansion pack cards
+          </label>
+          <p class="hint setup-option-hint">
+            Adds expansion scoring and uses the 89-card expanded deck (vs. 70-card base deck).
+          </p>
+
+          <div class="setup-section">
+            <h3>Round settings</h3>
+            <div class="setup-grid">
+              <label>
+                Rounds
+                <input type="number" id="total-rounds" min="1" max="20" value="10" />
+              </label>
+              <label>
+                Start with
+                <input type="number" id="starting-cards" min="1" max="20" value="1" />
+                cards
+              </label>
+              <label>
+                Add each round
+                <input type="number" id="card-increment" min="0" max="20" value="1" />
+              </label>
+            </div>
+            <p id="deck-limit-hint" class="hint"></p>
+            <div id="round-schedule" class="round-schedule"></div>
+          </div>
+
+          <div class="setup-section players-setup-section">
+            <h3>Players</h3>
+            <p class="hint">Select household players for this game, then add any guests.</p>
+            <div id="sk-player-picker" class="player-picker-host"></div>
+          </div>
+          <div class="btn-row">
+            <button type="button" id="sk-start-game-btn" class="btn btn-primary">Start Game</button>
+          </div>
+        </div>
+
+        <div id="flip7-setup" class="hidden">
+          <h2>New Flip 7 Game</h2>
+          <p class="hint">Official rules: 3+ players. Pick saved players or add guests, then start. First to the target score wins after a round ends.</p>
+          <div class="setup-grid">
+            <label>
+              Winning score
+              <input type="number" id="flip7-target-score" min="50" max="500" value="200" />
+            </label>
+            <label>
+              Flip 7 bonus
+              <input type="number" id="flip7-bonus-points" min="0" max="50" value="15" />
+            </label>
+            <label>
+              Bust penalty (points lost)
+              <input type="number" id="flip7-bust-points" min="0" max="100" value="0" />
+            </label>
+          </div>
+          <p class="hint setup-option-hint">
+            Scoring order: number sum → ×2 → +modifiers → Flip 7 bonus. Bust penalty is subtracted from the round (0 = official).
+          </p>
+          <div class="setup-section players-setup-section">
+            <h3>Players</h3>
+            <p class="hint">Select household players for this game, then add any guests.</p>
+            <div id="flip7-player-picker" class="player-picker-host"></div>
+          </div>
+          <div class="btn-row">
+            <button type="button" id="flip7-start-game-btn" class="btn btn-primary">Start Game</button>
+          </div>
+        </div>
+
+        <div id="rook-setup" class="hidden">
+          <h2>New Rook Game</h2>
+          <p class="hint">
+            Tolman Rules from
+            <a href="https://rookgame.com/official-rules/" target="_blank" rel="noopener noreferrer">rookgame.com</a>
+            — full 57-card deck, four players, two partnerships, 5-card kitty.
+          </p>
+
+          <div class="setup-section rook-family-rules">
+            <h3>Tolman Rules</h3>
+            <ul class="rook-rules-list">
+              <li><strong>1 is high</strong> in each suit (above 14). <strong>Rook</strong> is the lowest trump in the trump color.</li>
+              <li><strong>Counters:</strong> 1 = 15, 14 = 10, 10 = 10, 5 = 5, Rook = 20 — <strong>180</strong> per hand.</li>
+              <li><strong>Kitty:</strong> winner of the last trick scores counters left in the kitty.</li>
+              <li><strong>Sweep:</strong> take all 180 counters in tricks for +20 bonus (200 total).</li>
+              <li><strong>Bid/set:</strong> make your bid or lose it; the other team always keeps their counters. Play to <strong>500</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="setup-section">
+            <h3>Game length</h3>
+            <div class="setup-grid">
+              <label>
+                Winning score
+                <input type="number" id="rook-target-score" min="100" max="1000" value="500" />
+              </label>
+              <label>
+                Hands to play
+                <input type="number" id="rook-total-hands" min="1" max="30" value="8" />
+              </label>
+            </div>
+            <p class="hint setup-option-hint">Tolman Rules play to 500; hand limit is optional if you stop early.</p>
+          </div>
+
+          <div class="setup-section players-setup-section">
+            <h3>Players</h3>
+            <p class="hint">Select exactly four players. Partners are 1st &amp; 2nd vs. 3rd &amp; 4th in the list below.</p>
+            <div id="rook-player-picker" class="player-picker-host"></div>
+          </div>
+
+          <div class="setup-section">
+            <h3>Teams</h3>
+            <div id="rook-team-preview" class="rook-team-preview hint"></div>
+          </div>
+
+          <div class="btn-row">
+            <button type="button" id="rook-start-game-btn" class="btn btn-primary">Start Game</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Skull King round detail -->
+      <section id="round-detail-view" class="card hidden">
+        <div class="round-detail-header">
+          <h2 id="round-detail-title">Round Results</h2>
+          <button type="button" id="back-to-current-btn" class="btn btn-secondary hidden">
+            Back to current round
+          </button>
+        </div>
+        <div id="round-detail-content"></div>
+      </section>
+
+      <!-- Active games -->
+      <section id="game-view" class="hidden">
+        <div id="skull-king-game-panel" class="game-panel hidden">
+          <div id="leader-banner" class="leader-banner hidden"></div>
+          <div class="card">
+            <span id="round-badge" class="round-badge">Round 1</span>
+            <p id="round-info" class="hint"></p>
+            <p class="hint">Click a completed round to review its scores.</p>
+            <div id="round-preview" class="round-preview"></div>
+          </div>
+          <form id="round-form" class="card">
+            <h2>Enter Round Results</h2>
+            <div id="player-round-inputs"></div>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary">Score Round</button>
+              <button type="button" id="undo-round-btn" class="btn btn-secondary hidden">
+                Undo Last Round
+              </button>
+            </div>
+          </form>
+          <div class="card">
+            <h2>Scoreboard</h2>
+            <div class="scoreboard-table-wrap">
+              <table id="scoreboard">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="btn-row game-actions">
+            <button type="button" id="sk-game-settings-btn" class="btn btn-secondary">Game Settings</button>
+            <button type="button" id="sk-new-game-btn" class="btn btn-danger">New Game</button>
+          </div>
+        </div>
+
+        <div id="flip7-game-panel" class="game-panel hidden">
+          <div id="flip7-leader-banner" class="leader-banner hidden"></div>
+          <div class="card">
+            <span id="flip7-round-badge" class="round-badge">Round 1</span>
+            <p id="flip7-round-info" class="hint"></p>
+            <p class="hint">Click a completed round to review or edit scores.</p>
+            <div id="flip7-round-preview" class="round-preview"></div>
+          </div>
+
+          <section id="flip7-round-detail-view" class="card hidden">
+            <div class="round-detail-header">
+              <h2 id="flip7-round-detail-title">Round Results</h2>
+              <button type="button" id="flip7-back-to-current-btn" class="btn btn-secondary hidden">
+                Back to current round
+              </button>
+            </div>
+            <div id="flip7-round-detail-content"></div>
+          </section>
+
+          <form id="flip7-round-form" class="card">
+            <h2>Enter Round Results</h2>
+            <p class="hint">Per player: tap <strong>Bust</strong> for 0 pts, or tap each number card and modifier in their row. Flip 7 bonus applies at 7 number cards.</p>
+            <div id="flip7-player-round-inputs"></div>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary">Score Round</button>
+              <button type="button" id="flip7-undo-round-btn" class="btn btn-secondary hidden">
+                Undo Last Round
+              </button>
+            </div>
+          </form>
+          <div class="card">
+            <h2>Scoreboard</h2>
+            <div class="scoreboard-table-wrap">
+              <table id="flip7-scoreboard">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="btn-row game-actions">
+            <button type="button" id="flip7-game-settings-btn" class="btn btn-secondary">Game Settings</button>
+            <button type="button" id="flip7-new-game-btn" class="btn btn-danger">New Game</button>
+          </div>
+        </div>
+
+        <div id="rook-game-panel" class="game-panel hidden">
+          <div id="rook-leader-banner" class="leader-banner hidden"></div>
+          <div class="card">
+            <span id="rook-round-badge" class="round-badge">Hand 1</span>
+            <p id="rook-round-info" class="hint"></p>
+          </div>
+
+          <form id="rook-hand-form" class="card rook-hand-form">
+            <h2>Score this hand</h2>
+            <p class="hint">Set the high bid, tap <strong>Bid</strong> next to the bidding team, then enter each team’s trick points (kitty not included yet).</p>
+            <label class="rook-bid-label">
+              High bid
+              <div class="value-stepper" id="rook-bid-stepper">
+                <button type="button" id="rook-bid-decrease" class="btn btn-secondary stepper-btn" aria-label="Decrease bid by 5">−</button>
+                <output id="rook-bid-display" class="stepper-value" for="rook-bid">120</output>
+                <input type="hidden" id="rook-bid" value="120" />
+                <button type="button" id="rook-bid-increase" class="btn btn-secondary stepper-btn" aria-label="Increase bid by 5">+</button>
+              </div>
+            </label>
+            <p class="hint">Team trick points plus kitty must total <strong>180</strong> (include the Rook in a team’s tricks if captured).</p>
+            <div id="rook-hand-team-inputs" class="rook-hand-teams"></div>
+            <div class="setup-section rook-kitty-row">
+              <label>
+                Kitty points
+                <input type="number" id="rook-kitty-points" min="0" max="180" value="0" />
+              </label>
+              <p class="hint">Usually 0. Tap <strong>Kitty</strong> next to the team that won the last trick when the kitty has points (optional when 0).</p>
+            </div>
+            <p id="rook-hand-preview" class="hint rook-hand-preview"></p>
+            <div class="btn-row">
+              <button type="submit" class="btn btn-primary">Score Hand</button>
+              <button type="button" id="rook-undo-hand-btn" class="btn btn-secondary hidden">Undo Last Hand</button>
+            </div>
+          </form>
+
+          <div class="card">
+            <h2>Team scoreboard</h2>
+            <div class="scoreboard-table-wrap">
+              <table id="rook-scoreboard">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="btn-row game-actions">
+            <button type="button" id="rook-game-settings-btn" class="btn btn-secondary">Game Settings</button>
+            <button type="button" id="rook-end-game-btn" class="btn btn-secondary">End game</button>
+            <button type="button" id="rook-new-game-btn" class="btn btn-danger">New Game</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game over -->
+      <section id="game-over-view" class="hidden">
+        <div class="view-toolbar">
+          <button type="button" id="game-over-back-to-home-btn" class="btn btn-secondary btn-back">
+            ← All games
+          </button>
+        </div>
+        <div id="skull-king-game-over-panel" class="game-panel hidden">
+          <div class="game-over">
+            <h2>🏴‍☠️ Game Over!</h2>
+            <p id="winner-text"></p>
+            <ol id="final-standings" class="final-standings"></ol>
+          </div>
+          <div class="card">
+            <h2>Round History</h2>
+            <p class="hint">Click any round to see bids, tricks, and bonuses.</p>
+            <div id="game-over-round-preview" class="round-preview"></div>
+          </div>
+          <div class="card">
+            <h2>Scoreboard</h2>
+            <div class="scoreboard-table-wrap">
+              <table id="game-over-scoreboard">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="game-over">
+            <div class="btn-row game-actions">
+              <button type="button" id="sk-game-over-settings-btn" class="btn btn-secondary">Game Settings</button>
+              <button type="button" id="sk-play-again-btn" class="btn btn-primary">Play Again</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="rook-game-over-panel" class="game-panel hidden">
+          <div class="game-over">
+            <h2>🃏 Rook — Final</h2>
+            <p id="rook-winner-text"></p>
+            <ol id="rook-final-standings" class="final-standings"></ol>
+          </div>
+          <div class="card">
+            <h2>Team scoreboard</h2>
+            <div class="scoreboard-table-wrap">
+              <table id="rook-game-over-scoreboard">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="game-over">
+            <div class="btn-row game-actions">
+              <button type="button" id="rook-game-over-settings-btn" class="btn btn-secondary">Game Settings</button>
+              <button type="button" id="rook-play-again-btn" class="btn btn-primary">Play Again</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="flip7-game-over-panel" class="game-panel hidden">
+          <div class="game-over">
+            <h2 class="flip7-game-over-title">Flip 7!</h2>
+            <p id="flip7-winner-text"></p>
+            <ol id="flip7-final-standings" class="final-standings"></ol>
+          </div>
+          <div class="card">
+            <h2>Round History</h2>
+            <p class="hint">Click any round to review or edit past scores.</p>
+            <div id="flip7-game-over-round-preview" class="round-preview"></div>
+          </div>
+          <div class="card">
+            <h2>Scoreboard</h2>
+            <div class="scoreboard-table-wrap">
+              <table id="flip7-game-over-scoreboard">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="game-over">
+            <div class="btn-row game-actions">
+              <button type="button" id="flip7-game-over-settings-btn" class="btn btn-secondary">Game Settings</button>
+              <button type="button" id="flip7-play-again-btn" class="btn btn-primary">Play Again</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Skull King settings -->
+    <div id="sk-game-settings-dialog" class="settings-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="sk-game-settings-title">
+      <div class="settings-dialog-backdrop" data-settings-dismiss></div>
+      <div class="settings-dialog-panel card">
+        <div class="settings-dialog-header">
+          <h2 id="sk-game-settings-title">Game Settings</h2>
+          <button type="button" id="sk-game-settings-close" class="btn btn-secondary" aria-label="Close">✕</button>
+        </div>
+        <p class="hint">Changes apply to this game. Scores are kept unless you remove a player or shorten rounds.</p>
+        <div class="setup-section settings-section">
+          <h3>Players</h3>
+          <div id="sk-settings-player-picker"></div>
+        </div>
+        <label class="setup-option">
+          <input type="checkbox" id="settings-use-expansion-checkbox" />
+          Using expansion pack cards
+        </label>
+        <div class="setup-section settings-section">
+          <h3>Round settings</h3>
+          <div class="setup-grid">
+            <label>
+              Rounds
+              <input type="number" id="settings-total-rounds" min="1" max="20" value="10" />
+            </label>
+            <label>
+              Start with
+              <input type="number" id="settings-starting-cards" min="1" max="20" value="1" />
+              cards
+            </label>
+            <label>
+              Add each round
+              <input type="number" id="settings-card-increment" min="0" max="20" value="1" />
+            </label>
+          </div>
+          <p id="settings-deck-limit-hint" class="hint"></p>
+          <div id="settings-round-schedule" class="round-schedule"></div>
+        </div>
+        <div class="btn-row settings-dialog-actions">
+          <button type="button" id="sk-game-settings-cancel" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="sk-game-settings-save" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flip 7 settings -->
+    <div id="flip7-settings-dialog" class="settings-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="flip7-settings-title">
+      <div class="settings-dialog-backdrop" data-settings-dismiss></div>
+      <div class="settings-dialog-panel card">
+        <div class="settings-dialog-header">
+          <h2 id="flip7-settings-title">Flip 7 Settings</h2>
+          <button type="button" id="flip7-settings-close" class="btn btn-secondary" aria-label="Close">✕</button>
+        </div>
+        <p class="hint">Adjust scoring options or players. Past bust and bonus rounds are recalculated when those values change.</p>
+        <div class="setup-grid">
+          <label>
+            Winning score
+            <input type="number" id="flip7-settings-target-score" min="50" max="500" value="200" />
+          </label>
+          <label>
+            Flip 7 bonus
+            <input type="number" id="flip7-settings-bonus-points" min="0" max="50" value="15" />
+          </label>
+          <label>
+            Bust penalty (points lost)
+            <input type="number" id="flip7-settings-bust-points" min="0" max="100" value="0" />
+          </label>
+        </div>
+        <div class="setup-section settings-section">
+          <h3>Players</h3>
+          <div id="flip7-settings-player-picker"></div>
+        </div>
+        <div class="btn-row settings-dialog-actions">
+          <button type="button" id="flip7-settings-cancel" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="flip7-settings-save" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rook settings -->
+    <div id="rook-settings-dialog" class="settings-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="rook-settings-title">
+      <div class="settings-dialog-backdrop" data-settings-dismiss></div>
+      <div class="settings-dialog-panel card">
+        <div class="settings-dialog-header">
+          <h2 id="rook-settings-title">Rook Settings</h2>
+          <button type="button" id="rook-settings-close" class="btn btn-secondary" aria-label="Close">✕</button>
+        </div>
+        <p class="hint">Change players, winning score, or hand count. Team partners stay 1st &amp; 2nd vs. 3rd &amp; 4th in the player list.</p>
+        <div class="setup-grid">
+          <label>
+            Winning score
+            <input type="number" id="rook-settings-target-score" min="100" max="1000" value="500" />
+          </label>
+          <label>
+            Hands to play
+            <input type="number" id="rook-settings-total-hands" min="1" max="30" value="8" />
+          </label>
+        </div>
+        <div class="setup-section settings-section">
+          <h3>Players</h3>
+          <div id="rook-settings-player-picker"></div>
+        </div>
+        <div class="btn-row settings-dialog-actions">
+          <button type="button" id="rook-settings-cancel" class="btn btn-secondary">Cancel</button>
+          <button type="button" id="rook-settings-save" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirm-dialog" class="confirm-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+      <div class="confirm-dialog-backdrop" data-confirm-dismiss></div>
+      <div class="confirm-dialog-panel card">
+        <h2 id="confirm-dialog-title">Exit game?</h2>
+        <p id="confirm-dialog-message">
+          Are you sure you want to leave this game? All scores and progress will be lost.
+        </p>
+        <div class="btn-row confirm-dialog-actions">
+          <button type="button" id="confirm-dialog-cancel" class="btn btn-secondary">Keep playing</button>
+          <button type="button" id="confirm-dialog-confirm" class="btn btn-danger">Exit game</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

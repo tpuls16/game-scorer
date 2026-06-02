@@ -1,0 +1,190 @@
+/* Flip 7 — vibrant press-your-luck theme (The Op / party card aesthetic) */
+
+body[data-theme="flip7"] {
+  --bg-deep: #1a0a2e;
+  --bg-card: #2d1452;
+  --bg-input: #3d1f6e;
+  --gold: #ff2d87;
+  --gold-light: #ff6eb4;
+  --text: #fdf4ff;
+  --text-muted: #c9a8e8;
+  --success: #00e5a0;
+  --danger: #ff4466;
+  --border: #6b3fa0;
+  --shadow: 0 8px 32px rgba(255, 45, 135, 0.2);
+}
+
+body[data-theme="flip7"] {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255, 45, 135, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 10%, rgba(0, 212, 255, 0.15) 0%, transparent 45%),
+    var(--bg-deep);
+}
+
+body[data-theme="flip7"] header h1 {
+  background: linear-gradient(135deg, #ff6eb4, #00d4ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body[data-theme="flip7"] .btn-primary {
+  background: linear-gradient(135deg, #ff2d87, #c41d6a);
+  color: #fff;
+}
+
+body[data-theme="flip7"] .round-badge {
+  background: linear-gradient(135deg, #7b2ff7, #ff2d87);
+  color: #fff;
+}
+
+body[data-theme="flip7"] .leader-banner {
+  background: linear-gradient(90deg, rgba(123, 47, 247, 0.35), rgba(255, 45, 135, 0.25));
+  border-color: var(--gold);
+}
+
+body[data-theme="flip7"] .round-preview button.done {
+  background: var(--bg-input);
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+body[data-theme="flip7"] .round-preview button.done.viewing,
+body[data-theme="flip7"] .round-preview span.current {
+  background: var(--gold);
+  color: #1a0a2e;
+}
+
+body[data-theme="flip7"] .flip7-game-over-title {
+  font-size: clamp(2rem, 6vw, 3rem);
+  background: linear-gradient(135deg, #ff6eb4, #00d4ff, #ffe566);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0 0 0.5rem;
+}
+
+body[data-theme="flip7"] .game-card[data-game-id="flip7"]:not(:disabled) {
+  border-color: #ff2d87;
+}
+
+body[data-theme="flip7"] .flip7-player-card.is-busted {
+  opacity: 0.85;
+  border-left: 3px solid var(--danger);
+}
+
+body[data-theme="flip7"] .flip7-player-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+body[data-theme="flip7"] .flip7-player-card-header h3 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 6rem;
+}
+
+body[data-theme="flip7"] .flip7-live-score {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+}
+
+body[data-theme="flip7"] .flip7-live-score.positive {
+  color: var(--success);
+}
+
+body[data-theme="flip7"] .flip7-live-score.negative {
+  color: var(--danger);
+}
+
+body[data-theme="flip7"] .flip7-bust-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 2px solid var(--danger);
+  color: var(--danger);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+body[data-theme="flip7"] .flip7-bust-btn.is-active,
+body[data-theme="flip7"] .flip7-bust-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+body[data-theme="flip7"] .flip7-flip7-badge {
+  margin: 0 0 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255, 230, 102, 0.25), rgba(0, 229, 160, 0.2));
+  border: 1px solid #ffe566;
+  color: #ffe566;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+body[data-theme="flip7"] .flip7-picker-section {
+  margin-bottom: 1rem;
+}
+
+body[data-theme="flip7"] .flip7-picker-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+body[data-theme="flip7"] .flip7-picker-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+}
+
+body[data-theme="flip7"] .flip7-pick-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+body[data-theme="flip7"] .flip7-pick-btn {
+  min-width: 2.5rem;
+  padding: 0.45rem 0.55rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+body[data-theme="flip7"] .flip7-pick-btn:hover {
+  border-color: var(--gold-light);
+}
+
+body[data-theme="flip7"] .flip7-pick-btn.is-selected {
+  background: linear-gradient(135deg, #ff2d87, #7b2ff7);
+  border-color: var(--gold-light);
+  color: #fff;
+}
+
+body[data-theme="flip7"] .flip7-mod-x2.is-selected {
+  background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+}
+
+body[data-theme="flip7"] .round-detail-actions {
+  margin-bottom: 1rem;
+}
+
+body[data-theme="flip7"] .game-card-icon {
+  font-weight: 800;
+  font-size: 2.25rem;
+  color: var(--gold-light);
+}

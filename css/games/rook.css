@@ -1,0 +1,155 @@
+/* Rook — Tolman Rules partnership trick-taking */
+
+body[data-theme="rook"] {
+  --bg-deep: #0f1f14;
+  --bg-card: #1a3324;
+  --bg-input: #244530;
+  --gold: #e8b923;
+  --gold-light: #f5d76e;
+  --text: #eef6f0;
+  --text-muted: #9bb8a3;
+  --success: #3ecf8e;
+  --danger: #e05c5c;
+  --border: #3d6b4a;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+body[data-theme="rook"] {
+  background:
+    radial-gradient(ellipse at top, #2a5c38 0%, transparent 55%),
+    var(--bg-deep);
+}
+
+body[data-theme="rook"] header h1 {
+  color: var(--gold-light);
+}
+
+body[data-theme="rook"] .round-badge {
+  background: linear-gradient(135deg, #2d6a3e, #e8b923);
+  color: #0f1a10;
+}
+
+body[data-theme="rook"] .rook-scoring-placeholder {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body[data-theme="rook"] .rook-team-preview p {
+  margin: 0.35rem 0;
+}
+
+body[data-theme="rook"] .rook-team-preview strong {
+  color: var(--gold-light);
+}
+
+body[data-theme="rook"] .rook-rules-list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  color: var(--text);
+}
+
+body[data-theme="rook"] .rook-rules-list li {
+  margin-bottom: 0.35rem;
+}
+
+body[data-theme="rook"] .rook-family-rules {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body[data-theme="rook"] .rook-hand-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+body[data-theme="rook"] .rook-team-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+body[data-theme="rook"] .rook-team-capture h4 {
+  margin: 0;
+  color: var(--gold-light);
+  font-size: 0.95rem;
+}
+
+body[data-theme="rook"] .rook-team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+body[data-theme="rook"] .rook-team-toggle {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+body[data-theme="rook"] .rook-team-toggle.is-selected {
+  background: var(--gold);
+  color: #0f1a10;
+  border-color: var(--gold-light);
+}
+
+body[data-theme="rook"] .rook-team-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+body[data-theme="rook"] .rook-team-toggle.hidden {
+  display: none;
+}
+
+body[data-theme="rook"] .rook-hand-preview {
+  margin: 0.75rem 0 0;
+  color: var(--gold-light);
+}
+
+body[data-theme="rook"] .rook-hand-preview.rook-counters-invalid {
+  color: var(--danger);
+}
+
+body[data-theme="rook"] .rook-hand-preview.rook-counters-valid {
+  color: var(--success);
+}
+
+body[data-theme="rook"] #rook-hand-form button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body[data-theme="rook"] .rook-bid-row {
+  margin-bottom: 0.5rem;
+}
+
+body[data-theme="rook"] .rook-bid-label .value-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+body[data-theme="rook"] .value-stepper .stepper-btn {
+  min-width: 2.5rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+body[data-theme="rook"] .value-stepper .stepper-value {
+  flex: 1;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--gold-light);
+  font-variant-numeric: tabular-nums;
+}
