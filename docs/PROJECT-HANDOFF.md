@@ -20,7 +20,7 @@ Progress saves in **localStorage**:
 | `game-scorer-rook` | Rook game |
 | `game-scorer-profiles` | Household player profiles (shared across games) |
 
-Run locally (required for JS modules):
+**Run locally** (required for JS modules):
 
 ```bash
 cd ~/projects/apps/game-scorer
@@ -28,7 +28,9 @@ python3 -m http.server 8080
 ```
 
 Open [http://localhost:8080](http://localhost:8080).  
-If port 8080 is in use: `lsof -i :8080` then `kill <PID>`, or use port 8081.
+If port 8080 is in use: `lsof -ti :8080 | xargs kill`, then restart.
+
+**Run on phones (no Mac server):** use GitHub Pages — **https://tpuls16.github.io/game-scorer/** after deploy is fixed (see [Git & GitHub Pages](#git--github-pages) below).
 
 ---
 
@@ -57,8 +59,12 @@ game-scorer/
 │   ├── skull-king/           # app.js, scoring.js, deck.js, index.js
 │   ├── flip7/                # app.js, scoring.js, index.js
 │   └── rook/                 # app.js, scoring.js, index.js
+├── .gitignore
+├── .github/workflows/deploy-pages.yml
 ├── README.md
-└── docs/PROJECT-HANDOFF.md
+└── docs/
+    ├── PROJECT-HANDOFF.md
+    └── DEPLOY-GITHUB-PAGES.md
 ```
 
 **Mental model:** `js/core/` = shared app; `js/games/<id>/` = one game each; register new games in `catalog.js`. See `js/games/README.md`.
@@ -381,10 +387,46 @@ Chats are tied to the **workspace folder open in Cursor**, not the project files
 
 ## Git & GitHub Pages
 
-- **Deploy guide:** [DEPLOY-GITHUB-PAGES.md](./DEPLOY-GITHUB-PAGES.md)
-- **Workflow:** `.github/workflows/deploy-pages.yml` — deploys static site on push to `main`
-- **Live URL pattern:** `https://<github-user>.github.io/<repo-name>/`
-- **Version control:** standard `git add` / `commit` / `push`; no build step required
+| Item | Value |
+|------|--------|
+| **Repo** | [github.com/tpuls16/game-scorer](https://github.com/tpuls16/game-scorer) |
+| **Branch** | `main` |
+| **Deploy guide** | [DEPLOY-GITHUB-PAGES.md](./DEPLOY-GITHUB-PAGES.md) |
+| **Workflow file** | `.github/workflows/deploy-pages.yml` (workflow name: **Deploy to GitHub Pages**) |
+| **Live URL (when working)** | **https://tpuls16.github.io/game-scorer/** |
+
+Push to `main` → Actions runs → site updates (~1–2 min). No build step.
+
+### If Actions shows a failed run titled “Initial creation of Game Scorer”
+
+That title is your **first commit message**, not a different broken workflow. The real workflow is **Deploy to GitHub Pages**.
+
+**Typical failure (tpuls16 repo, run #1):** Checkout and Upload succeed; **Deploy to GitHub Pages** fails because **GitHub Pages was not turned on yet** in repo Settings.
+
+**Fix (do in order):**
+
+1. Open **https://github.com/tpuls16/game-scorer/settings/pages**
+2. Under **Build and deployment** → **Source**, choose **GitHub Actions** (not “Deploy from a branch” yet).
+3. Go to **Actions** → click the failed run → **Re-run all jobs** (top right).
+
+When it passes (green check), return to **Settings → Pages** and copy the public URL.
+
+**If it still fails:** open the failed **Deploy to GitHub Pages** step log. Also check **Settings → Actions → General → Workflow permissions** → **Read and write permissions** → Save.
+
+**Easier fallback (no Actions):** **Settings → Pages** → Source **Deploy from a branch** → Branch `main` → folder `/ (root)` → Save. Site can work without the workflow; you can ignore or delete `.github/workflows/deploy-pages.yml` later if you prefer.
+
+### Data on the live site
+
+GitHub hosts the **app files** only. Game scores and household players remain **per phone/browser** (localStorage), not synced through Git.
+
+### Version control (daily)
+
+```bash
+cd ~/projects/apps/game-scorer
+git add .
+git commit -m "What you changed"
+git push
+```
 
 ---
 

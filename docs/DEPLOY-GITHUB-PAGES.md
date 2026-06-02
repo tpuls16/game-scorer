@@ -51,22 +51,71 @@ The workflow file is `.github/workflows/deploy-pages.yml` — it redeploys autom
 
 ---
 
-## Day-to-day version control
+## Publish changes from Cursor (your normal workflow)
+
+You do **not** need anyone else to update the live site. GitHub Pages updates when **you push** to `main`.
+
+### Every time you want the website to match your Mac
+
+1. **Save your files** in Cursor (`Cmd+S` on open files).
+2. Open **Terminal** in Cursor (**Terminal → New Terminal**) or use Mac Terminal.
+3. Run these four steps:
 
 ```bash
 cd ~/projects/apps/game-scorer
 
-# See what changed
 git status
-git diff
+```
 
-# Save a snapshot
+Read the list — red = changed, green = new. If it says `nothing to commit`, you have nothing to publish yet.
+
+```bash
 git add .
-git commit -m "Describe what you changed"
+git commit -m "Short note: what you changed"
 git push
 ```
 
-After `git push`, wait ~1–2 minutes for Actions to deploy; refresh the site on your phone.
+Example messages: `Fix Rook bid stepper`, `Add mobile styles for profiles`.
+
+4. **Wait ~1–2 minutes.** Open **https://github.com/tpuls16/game-scorer/actions** — wait for **Deploy to GitHub Pages** to show a **green checkmark**.
+5. On your phone, open **https://tpuls16.github.io/game-scorer/** and **refresh** (or close the tab and open again).
+
+That’s the full loop. Edit in Cursor → `add` → `commit` → `push` → wait → refresh phone.
+
+### Test before you publish (optional)
+
+Use the local server while building; only `git push` when you want family to see it:
+
+```bash
+cd ~/projects/apps/game-scorer
+python3 -m http.server 8080
+```
+
+Open [http://localhost:8080](http://localhost:8080) on your Mac. Stop the server with **Ctrl+C** when done.
+
+### Cursor Source Control panel (optional)
+
+Instead of terminal commands, you can use the **branch icon** in the left sidebar:
+
+1. See changed files under **Changes**
+2. Type a message in the box
+3. Click **Commit**
+4. Click **Sync Changes** or **Push** (upload to GitHub)
+
+Same result as `git add` / `commit` / `push`.
+
+### What you do *not* need to do
+
+- Re-run Pages setup in Settings each time  
+- Upload files manually on github.com  
+- Keep `python3 -m http.server` running for the public site  
+- Ask the AI to push for you (unless you want help writing the commit message)
+
+### If push works but the phone still shows the old app
+
+- Hard refresh Safari (or clear site data for that URL)  
+- Confirm Actions finished green  
+- Confirm you’re opening **https://tpuls16.github.io/game-scorer/** (with `/game-scorer/`)
 
 ---
 
@@ -95,12 +144,43 @@ python3 -m http.server 8080
 
 ## Troubleshooting
 
+### Failed run titled “Initial creation of Game Scorer” (or similar)
+
+That is usually your **commit message** on the run list. The workflow is still **Deploy to GitHub Pages** (file: `.github/workflows/deploy-pages.yml`).
+
+Click the run → expand the **deploy** job:
+
+| Step that failed | What it means | Fix |
+|------------------|---------------|-----|
+| **Deploy to GitHub Pages** (Upload succeeded) | Pages not enabled for the repo yet | **Settings → Pages** → set **Source** to **GitHub Actions** → **Re-run all jobs** on the failed run |
+| **Upload site** | Rare path/permission issue | Confirm workflow file matches this repo; check Actions permissions (below) |
+| **Checkout** | Repo/branch issue | Confirm you pushed to `main` |
+
+Direct link for this project: **https://github.com/tpuls16/game-scorer/settings/pages**
+
+Expected live URL after success: **https://tpuls16.github.io/game-scorer/**
+
+### Actions permissions
+
+**Settings → Actions → General → Workflow permissions** → select **Read and write permissions** → **Save**.
+
+### Other issues
+
 | Problem | Fix |
 |---------|-----|
-| Actions workflow fails | **Actions** tab → open the failed run → read the error log. |
-| Blank page at Pages URL | Confirm the URL includes the repo name (`/game-scorer/`). Open browser dev tools → Console for 404s. |
-| Old version on phone | Hard refresh or clear site data; wait for deploy to finish. |
-| `git push` rejected | `git pull --rebase origin main` then push again. |
+| No green run after push | Wait 2 min; refresh **Actions** tab |
+| Blank page at Pages URL | URL must include repo name: `/game-scorer/` not just `github.io` |
+| Old version on phone | Hard refresh; wait for deploy to finish |
+| `git push` rejected | `git pull --rebase origin main` then push again |
+
+### Fallback: deploy without Actions
+
+1. **Settings → Pages**
+2. **Source:** **Deploy from a branch**
+3. **Branch:** `main` · **Folder:** `/ (root)`
+4. Save — GitHub shows the site URL in ~1 minute
+
+You do not need a green Actions run for this path.
 
 ---
 
