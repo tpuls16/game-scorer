@@ -56,12 +56,12 @@ function updateAppHeader(view) {
     appTitle.textContent = "Game Scorer";
     appSubtitle.textContent = "Choose a game to start scoring";
     document.title = "Game Scorer";
-    document.body.dataset.theme = "";
+    document.body.dataset.theme = "home";
     return;
   }
 
   if (view === "player-profile") {
-    document.body.dataset.theme = "";
+    document.body.dataset.theme = "home";
     document.title = `${appTitle.textContent} — Game Scorer`;
     return;
   }

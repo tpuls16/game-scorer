@@ -1,0 +1,146 @@
+/* Home hub — neutral “game night” shell (not Skull King pirate) */
+
+body[data-theme="home"] {
+  --bg-deep: #14121a;
+  --bg-card: #1f1c28;
+  --bg-input: #2a2636;
+  --gold: #c9a87c;
+  --gold-light: #f2e6d8;
+  --accent: #7eb8a4;
+  --accent-soft: rgba(126, 184, 164, 0.18);
+  --coral: #d4847a;
+  --text: #f4f0eb;
+  --text-muted: #a39cab;
+  --success: #6bc9a8;
+  --danger: #e07878;
+  --border: #3d3848;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  --radius: 14px;
+}
+
+body[data-theme="home"] {
+  background:
+    radial-gradient(ellipse 120% 80% at 10% -20%, rgba(126, 184, 164, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 95% 0%, rgba(212, 132, 122, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(201, 168, 124, 0.08) 0%, transparent 45%),
+    var(--bg-deep);
+}
+
+body[data-theme="home"] header h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--accent) 55%, var(--coral) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body[data-theme="home"] header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+body[data-theme="home"] .card {
+  border-color: var(--border);
+  background: linear-gradient(165deg, rgba(42, 38, 54, 0.95) 0%, rgba(31, 28, 40, 0.98) 100%);
+  box-shadow: var(--shadow);
+}
+
+body[data-theme="home"] .card h2 {
+  color: var(--gold-light);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+body[data-theme="home"] .btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #5a9d88 100%);
+  color: #0f1412;
+  border: 1px solid rgba(126, 184, 164, 0.5);
+}
+
+body[data-theme="home"] .btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+body[data-theme="home"] .btn-secondary {
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+
+body[data-theme="home"] .btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] input:focus,
+body[data-theme="home"] select:focus {
+  outline-color: var(--accent);
+}
+
+body[data-theme="home"] .game-card {
+  background: rgba(26, 24, 34, 0.85);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition:
+    border-color 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
+}
+
+body[data-theme="home"] .game-card:not(:disabled):hover {
+  border-color: var(--accent);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+body[data-theme="home"] .game-card[data-game-id="skull-king"]:not(:disabled) {
+  border-left: 4px solid #6b7da8;
+}
+
+body[data-theme="home"] .game-card[data-game-id="flip7"]:not(:disabled) {
+  border-left: 4px solid #c45a9a;
+}
+
+body[data-theme="home"] .game-card[data-game-id="rook"]:not(:disabled) {
+  border-left: 4px solid #5a9d6e;
+}
+
+body[data-theme="home"] .game-card-name {
+  color: var(--text);
+}
+
+body[data-theme="home"] .game-card-badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+body[data-theme="home"] .profiles-saved-block {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--border);
+}
+
+body[data-theme="home"] .profiles-saved-heading,
+body[data-theme="home"] .profiles-add-heading {
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .profile-list-item.is-favorite {
+  border-color: rgba(201, 168, 124, 0.45);
+}
+
+body[data-theme="home"] .btn-favorite-toggle.is-favorite {
+  color: var(--gold-light);
+  border-color: var(--gold);
+  background: rgba(201, 168, 124, 0.12);
+}
+
+body[data-theme="home"] .profile-chip.is-selected,
+body[data-theme="home"] .profile-chip[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .profiles-other-select-text {
+  color: var(--gold-light);
+}

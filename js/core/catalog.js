@@ -12,6 +12,7 @@ export const GAMES = [
     description: "Pirate trick-taking — track bids, tricks, and bonuses round by round",
     icon: "☠",
     theme: "skull-king",
+    stylesheet: "css/games/skull-king.css",
     available: true,
   },
   {

@@ -1,0 +1,48 @@
+/* Skull King — pirate / nautical (only when playing Skull King) */
+
+body[data-theme="skull-king"] {
+  --bg-deep: #0a1628;
+  --bg-card: #122240;
+  --bg-input: #1a3055;
+  --gold: #d4a843;
+  --gold-light: #f0d078;
+  --text: #e8eef5;
+  --text-muted: #8fa3bf;
+  --success: #4caf82;
+  --danger: #e05c5c;
+  --border: #2a4570;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+body[data-theme="skull-king"] {
+  background:
+    radial-gradient(ellipse at top, #1a3055 0%, transparent 60%),
+    var(--bg-deep);
+}
+
+body[data-theme="skull-king"] header h1 {
+  color: var(--gold-light);
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+}
+
+body[data-theme="skull-king"] .btn-primary {
+  background: linear-gradient(135deg, var(--gold), #b8892a);
+  color: #1a1200;
+  border: none;
+}
+
+body[data-theme="skull-king"] .round-badge {
+  background: linear-gradient(135deg, var(--gold), #b8892a);
+  color: #1a1200;
+}
+
+body[data-theme="skull-king"] .leader-banner {
+  background: rgba(212, 168, 67, 0.12);
+  border-color: var(--gold);
+}
+
+body[data-theme="skull-king"] .game-card[data-game-id="skull-king"]:not(:disabled) {
+  border-color: var(--gold);
+}
