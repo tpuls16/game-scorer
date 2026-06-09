@@ -22,7 +22,11 @@ import {
   buildTeamLabels,
 } from "./scoring.js";
 import { tryRecordGameHistory } from "../../core/game-history.js";
-import { mapRookPlayers, rosterRefsFromGamePlayers } from "../../core/game-players.js";
+import {
+  mapRookPlayers,
+  promoteGuestsToSavedProfiles,
+  rosterRefsFromGamePlayers,
+} from "../../core/game-players.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
 import { scopedStorageKey } from "../../core/user-storage.js";
 
@@ -558,7 +562,7 @@ function closeGameSettings() {
 }
 
 function saveGameSettings() {
-  const playerRefs = settingsPlayerPicker.getPlayersForGame();
+  const playerRefs = promoteGuestsToSavedProfiles(settingsPlayerPicker.getPlayersForGame());
   const names = settingsPlayerPicker.getPlayerNames();
   const totalHands = Math.max(1, Math.min(30, Number(settingsTotalHandsInput.value)));
   const targetScore = Math.max(
@@ -609,7 +613,7 @@ function bindEvents({ showExitGameConfirm }) {
       return;
     }
 
-    startGame(playerRefs, { totalHands, targetScore });
+    startGame(promoteGuestsToSavedProfiles(playerRefs), { totalHands, targetScore });
   });
 
   handForm?.addEventListener("submit", (event) => {

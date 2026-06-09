@@ -21,6 +21,7 @@ import { tryRecordGameHistory } from "../../core/game-history.js";
 import {
   mapFlip7Players,
   mapFlip7PlayersFromSettings,
+  promoteGuestsToSavedProfiles,
   rosterRefsFromGamePlayers,
 } from "../../core/game-players.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
@@ -731,7 +732,7 @@ function closeGameSettings() {
 }
 
 function saveGameSettings() {
-  const playerRefs = settingsPlayerPicker.getPlayersForGame();
+  const playerRefs = promoteGuestsToSavedProfiles(settingsPlayerPicker.getPlayersForGame());
   const playerNames = settingsPlayerPicker.getPlayerNames();
   const targetScore = Math.max(50, Math.min(500, Number(settingsTargetInput.value)));
   const flip7Bonus = Math.max(0, Math.min(50, Number(settingsBonusInput.value)));
@@ -803,7 +804,7 @@ function bindEvents({ showExitGameConfirm }) {
       return;
     }
 
-    startGame(playerRefs, { targetScore, flip7Bonus, bustPoints });
+    startGame(promoteGuestsToSavedProfiles(playerRefs), { targetScore, flip7Bonus, bustPoints });
   });
 
   document.getElementById("flip7-game-settings-btn").addEventListener("click", openGameSettings);

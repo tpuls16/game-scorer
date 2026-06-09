@@ -21,6 +21,7 @@ import { tryRecordGameHistory } from "../../core/game-history.js";
 import {
   mapSkullKingPlayers,
   mapSkullKingPlayersFromSettings,
+  promoteGuestsToSavedProfiles,
   rosterRefsFromGamePlayers,
 } from "../../core/game-players.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
@@ -471,7 +472,7 @@ function applyGameSettings(playerRefs, useExpansion, totalRounds, cardsPerRound)
 }
 
 function saveGameSettings() {
-  const playerRefs = getSettingsPlayerRefs();
+  const playerRefs = promoteGuestsToSavedProfiles(getSettingsPlayerRefs());
   const playerNames = getSettingsPlayerNames();
   const useExpansion = settingsScheduleEls.useExpansionCheckbox.checked;
   const totalRounds = Math.max(1, Math.min(20, Number(settingsScheduleEls.totalRoundsInput.value)));
@@ -921,7 +922,7 @@ document.getElementById("sk-start-game-btn").addEventListener("click", () => {
     return;
   }
 
-  startGame(playerRefs, { useExpansion, totalRounds, cardsPerRound });
+  startGame(promoteGuestsToSavedProfiles(playerRefs), { useExpansion, totalRounds, cardsPerRound });
 });
 
 [totalRoundsInput, startingCardsInput, cardIncrementInput, useExpansionCheckbox].forEach(

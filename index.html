@@ -26,8 +26,8 @@
             <span id="account-identity" class="account-identity">
               <span id="account-username" class="account-username hidden">Family</span>
             </span>
-            <button type="button" id="account-sign-out-btn" class="btn btn-secondary btn-account">
-              Sign out
+            <button type="button" id="account-settings-btn" class="btn btn-secondary btn-account" aria-haspopup="dialog">
+              Settings
             </button>
           </div>
         </div>
@@ -38,6 +38,17 @@
         <p id="auth-hint" class="hint">
           One login for the whole family. Sign in with your family username or email.
         </p>
+        <p id="auth-add-another-hint" class="hint auth-add-another-hint hidden">
+          Sign in to another family account. Other accounts stay saved on this device.
+        </p>
+
+        <div id="auth-saved-logins" class="auth-saved-logins hidden">
+          <h3 class="auth-saved-logins-heading">Saved on this device</h3>
+          <p class="hint auth-saved-logins-hint">
+            Tap a family account to sign in. Usernames and passwords are saved on this device only.
+          </p>
+          <div id="auth-saved-logins-list" class="auth-saved-logins-list" aria-live="polite"></div>
+        </div>
 
         <div id="auth-mode-toggle" class="auth-mode-toggle" role="tablist" aria-label="Sign in or create account">
           <button type="button" id="auth-mode-sign-in" class="auth-mode-btn is-active" role="tab">
@@ -98,12 +109,65 @@
             required
           />
 
+          <p id="auth-forgot-row" class="auth-forgot-row">
+            <button type="button" id="auth-forgot-password-btn" class="auth-link-btn">
+              Forgot password?
+            </button>
+          </p>
+
           <p id="auth-status" class="auth-status hidden" aria-live="polite"></p>
 
           <button type="submit" id="auth-submit-btn" class="btn btn-primary auth-submit-btn">
             Sign in
           </button>
         </form>
+
+        <div id="auth-forgot-password-panel" class="auth-panel hidden">
+          <h3 class="auth-panel-heading">Reset password</h3>
+          <p class="hint">Enter your family email or username and we will email you a reset link.</p>
+          <label for="auth-forgot-login-id">Email or family username</label>
+          <input
+            type="text"
+            id="auth-forgot-login-id"
+            name="forgotLoginId"
+            autocomplete="username"
+            placeholder="PulsipherGameNight or family@example.com"
+          />
+          <p id="auth-forgot-status" class="auth-status hidden" aria-live="polite"></p>
+          <button type="button" id="auth-forgot-send-btn" class="btn btn-primary auth-submit-btn">
+            Send reset link
+          </button>
+          <button type="button" id="auth-forgot-back-btn" class="btn btn-secondary auth-panel-back-btn">
+            Back to sign in
+          </button>
+        </div>
+
+        <div id="auth-reset-password-panel" class="auth-panel hidden">
+          <h3 class="auth-panel-heading">Choose a new password</h3>
+          <p class="hint">You opened a password reset link. Enter a new password for this account.</p>
+          <label for="auth-new-password">New password</label>
+          <input
+            type="password"
+            id="auth-new-password"
+            name="newPassword"
+            autocomplete="new-password"
+            minlength="6"
+            placeholder="At least 6 characters"
+          />
+          <label for="auth-confirm-password">Confirm password</label>
+          <input
+            type="password"
+            id="auth-confirm-password"
+            name="confirmPassword"
+            autocomplete="new-password"
+            minlength="6"
+            placeholder="Re-enter your new password"
+          />
+          <p id="auth-reset-status" class="auth-status hidden" aria-live="polite"></p>
+          <button type="button" id="auth-reset-password-btn" class="btn btn-primary auth-submit-btn">
+            Update password
+          </button>
+        </div>
       </section>
 
       <section id="home-view" class="card">
@@ -112,24 +176,28 @@
         <div id="game-picker" class="game-picker"></div>
       </section>
 
+      <section id="recent-games-view" class="card recent-games-card">
+        <div class="recent-games-header">
+          <h2>Recent games</h2>
+          <button type="button" id="recent-games-view-all-btn" class="btn btn-secondary btn-recent-history">
+            View all
+          </button>
+        </div>
+        <div id="recent-games-list" class="recent-games-list" aria-live="polite"></div>
+      </section>
+
       <section id="profiles-view" class="card">
         <h2>Saved players</h2>
         <p class="hint">
-          Everyone who plays with this account (e.g. Mom, Dad, Tyson). Star favorites to show them here and when you start a game; everyone else stays in the menu below.
+          Everyone who plays with this account (e.g. Mom, Dad, Tyson). Star favorites to pin them to the top and show them when you start a game.
         </p>
         <p id="profiles-sync-hint" class="hint profiles-sync-hint">
           Changes sync to your account.
         </p>
 
         <div class="profiles-saved-block">
-          <h3 class="profiles-saved-heading">Favorites</h3>
           <p id="profiles-empty-hint" class="hint profiles-empty-hint">No saved players yet — add a name below.</p>
-          <p id="profiles-favorites-empty-hint" class="hint profiles-favorites-empty hidden">
-            No favorites yet. Star a player after you open them from Other saved players, or add a new name below.
-          </p>
-          <div id="profiles-favorites-list" class="profiles-list" aria-live="polite"></div>
-          <div id="profiles-other-dropdown-host"></div>
-          <div id="profiles-other-detail" class="profiles-other-detail hidden" aria-live="polite"></div>
+          <div id="profiles-list" class="profiles-list" aria-live="polite"></div>
         </div>
 
         <form id="add-profile-form" class="add-profile-form">
@@ -165,6 +233,17 @@
         </div>
       </section>
 
+      <section id="game-history-view" class="card hidden">
+        <div class="view-toolbar">
+          <button type="button" id="game-history-back-btn" class="btn btn-secondary btn-back">
+            ← Back
+          </button>
+        </div>
+        <h2>Game history</h2>
+        <p class="hint">Final scorecards from completed games on this account.</p>
+        <div id="game-history-list" class="game-history-list" aria-live="polite"></div>
+      </section>
+
       <!-- Setup -->
       <section id="setup-view" class="card hidden">
         <div class="view-toolbar">
@@ -175,7 +254,7 @@
 
         <div id="skull-king-setup">
           <h2 id="setup-title">New Skull King Game</h2>
-          <p class="hint">Choose who is playing (your saved players or guests), configure rounds, then start the game.</p>
+          <p class="hint">Choose saved players from your account, add any guests, configure rounds, then start the game.</p>
           <label class="setup-option">
             <input type="checkbox" id="use-expansion-checkbox" />
             Using expansion pack cards
@@ -207,7 +286,7 @@
 
           <div class="setup-section players-setup-section">
             <h3>Players</h3>
-            <p class="hint">Select your saved players for this game, then add any guests.</p>
+            <p class="hint">Tap saved players to add them, or use Guests for one-time names.</p>
             <div id="sk-player-picker" class="player-picker-host"></div>
           </div>
           <div class="btn-row">
@@ -217,7 +296,7 @@
 
         <div id="flip7-setup" class="hidden">
           <h2>New Flip 7 Game</h2>
-          <p class="hint">Official rules: 3+ players. Pick saved players or add guests, then start. First to the target score wins after a round ends.</p>
+          <p class="hint">Official rules: 3+ players. Pick saved players or add guests, then start. Guests are saved to your account when the game begins. First to the target score wins after a round ends.</p>
           <div class="setup-grid">
             <label>
               Winning score
@@ -237,7 +316,7 @@
           </p>
           <div class="setup-section players-setup-section">
             <h3>Players</h3>
-            <p class="hint">Select your saved players for this game, then add any guests.</p>
+            <p class="hint">Tap saved players to add them, or use Guests for one-time names.</p>
             <div id="flip7-player-picker" class="player-picker-host"></div>
           </div>
           <div class="btn-row">
@@ -281,7 +360,7 @@
 
           <div class="setup-section players-setup-section">
             <h3>Players</h3>
-            <p class="hint">Select exactly four players. Partners are 1st &amp; 2nd vs. 3rd &amp; 4th in the list below.</p>
+            <p class="hint">Select exactly four players. Partners are 1st &amp; 2nd vs. 3rd &amp; 4th in playing order (saved players first, then guests).</p>
             <div id="rook-player-picker" class="player-picker-host"></div>
           </div>
 
@@ -632,6 +711,25 @@
         <div class="btn-row settings-dialog-actions">
           <button type="button" id="rook-settings-cancel" class="btn btn-secondary">Cancel</button>
           <button type="button" id="rook-settings-save" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="account-settings-dialog" class="settings-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="account-settings-title">
+      <div class="settings-dialog-backdrop" data-account-settings-dismiss></div>
+      <div class="settings-dialog-panel card">
+        <div class="settings-dialog-header">
+          <h2 id="account-settings-title">Family accounts</h2>
+          <button type="button" id="account-settings-close-btn" class="btn btn-secondary" aria-label="Close">✕</button>
+        </div>
+        <p class="hint">Family logins saved on this device. Switch account to pick a different one on the sign-in screen.</p>
+        <div id="account-settings-list" class="account-settings-list" aria-live="polite"></div>
+        <div class="account-settings-actions">
+          <button type="button" id="account-switch-btn" class="btn btn-primary">Switch account</button>
+          <button type="button" id="account-add-another-btn" class="btn btn-secondary">+ Add another family account</button>
+        </div>
+        <div class="btn-row settings-dialog-actions account-settings-footer">
+          <button type="button" id="account-settings-sign-out-all-btn" class="btn btn-secondary hidden">Remove all saved logins</button>
         </div>
       </div>
     </div>

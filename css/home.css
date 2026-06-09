@@ -196,6 +196,59 @@ body[data-theme="home"] .btn-account {
   padding: 0.4rem 0.85rem;
 }
 
+body[data-theme="home"] .auth-add-another-hint {
+  margin-top: -0.25rem;
+  color: var(--accent);
+}
+
+body[data-theme="home"] .account-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+body[data-theme="home"] .account-settings-empty {
+  margin: 0;
+}
+
+body[data-theme="home"] .account-picker-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(42, 38, 54, 0.55);
+}
+
+body[data-theme="home"] .account-picker-card.is-current {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+body[data-theme="home"] .account-picker-card-name {
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .account-picker-card-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex: 1;
+  min-width: 8rem;
+}
+
+body[data-theme="home"] .account-settings-actions {
+  margin-bottom: 0.75rem;
+}
+
+body[data-theme="home"] .account-settings-footer {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 body[data-theme="home"] .profiles-sync-hint {
   color: var(--accent);
   margin-top: 0.25rem;
@@ -253,6 +306,112 @@ body[data-theme="home"] .auth-field-hint {
 body[data-theme="home"] .auth-submit-btn {
   width: 100%;
   margin-top: 0.25rem;
+}
+
+body[data-theme="home"] .auth-forgot-row {
+  margin: 0.15rem 0 0.5rem;
+  text-align: right;
+}
+
+body[data-theme="home"] .auth-link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+body[data-theme="home"] .auth-link-btn:hover {
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+body[data-theme="home"] .auth-panel.hidden {
+  display: none;
+}
+
+body[data-theme="home"] .auth-panel-heading {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .auth-panel-back-btn {
+  margin-top: 0.35rem;
+}
+
+body[data-theme="home"] .auth-saved-logins {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+body[data-theme="home"] .auth-saved-logins.hidden {
+  display: none;
+}
+
+body[data-theme="home"] .auth-saved-logins-heading {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .auth-saved-logins-hint {
+  margin: 0 0 0.65rem;
+}
+
+body[data-theme="home"] .auth-saved-logins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+body[data-theme="home"] .auth-saved-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(42, 38, 54, 0.55);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+body[data-theme="home"] .auth-saved-login-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+body[data-theme="home"] .auth-saved-login-name {
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .auth-saved-login-action {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+body[data-theme="home"] .account-settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+body[data-theme="home"] .account-settings-actions .btn {
+  width: 100%;
 }
 
 body[data-theme="home"] .auth-guest-btn {
@@ -432,12 +591,85 @@ body[data-theme="home"] .household-picker-card-name {
   color: var(--gold-light);
 }
 
+body[data-theme="home"] .recent-games-card {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+body[data-theme="home"] .recent-games-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+body[data-theme="home"] .recent-games-header h2 {
+  margin: 0;
+}
+
+body[data-theme="home"] .btn-recent-history {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+}
+
+body[data-theme="home"] .recent-games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+body[data-theme="home"] .game-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 body[data-theme="home"] .history-entry {
   margin-bottom: 0.85rem;
   padding: 0.85rem 1rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: rgba(42, 38, 54, 0.45);
+}
+
+body[data-theme="home"] .history-entry-compact {
+  margin-bottom: 0;
+  padding: 0.55rem 0.75rem;
+}
+
+body[data-theme="home"] .history-entry-compact .history-entry-header {
+  margin-bottom: 0.25rem;
+}
+
+body[data-theme="home"] .history-entry-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+}
+
+body[data-theme="home"] .history-entry-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+body[data-theme="home"] .history-entry-compact .history-entry-title {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+body[data-theme="home"] .history-entry-compact .history-entry-date {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+body[data-theme="home"] .history-entry-compact-standings {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 body[data-theme="home"] .history-entry-header {

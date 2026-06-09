@@ -1,6 +1,39 @@
+import { addProfile, findProfileByName } from "./profiles.js";
+
 /**
  * @typedef {{ name: string, profileId?: string, guest?: boolean }} GamePlayerRef
  */
+
+/**
+ * Saves guest names to the account roster and returns refs linked to profiles.
+ * @param {GamePlayerRef[]} refs
+ * @returns {GamePlayerRef[]}
+ */
+export function promoteGuestsToSavedProfiles(refs) {
+  return refs.map((ref) => {
+    if (!ref.guest) return ref;
+
+    const name = ref.name.trim();
+    if (!name) return ref;
+
+    const existing = findProfileByName(name);
+    if (existing) {
+      return { name: existing.name, profileId: existing.id };
+    }
+
+    const created = addProfile(name);
+    if (created) {
+      return { name: created.name, profileId: created.id };
+    }
+
+    const fallback = findProfileByName(name);
+    if (fallback) {
+      return { name: fallback.name, profileId: fallback.id };
+    }
+
+    return ref;
+  });
+}
 
 /** @param {GamePlayerRef[]} refs */
 export function mapSkullKingPlayers(refs) {

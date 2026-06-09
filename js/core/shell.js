@@ -1,6 +1,7 @@
 import { GAMES, DEFAULT_GAME_ID, getGameById, createGameModules } from "./catalog.js";
-import { isSignedIn } from "./auth.js";
+import { isPasswordRecoveryPending, isSignedIn } from "./auth.js";
 import { bindAuthNavigation } from "./auth-page.js";
+import { bindGameHistoryNavigation, renderHomeRecentGames } from "./game-history-page.js";
 import { bindProfileNavigation } from "./player-profile-page.js";
 
 const appTitle = document.getElementById("app-title");
@@ -8,7 +9,9 @@ const appSubtitle = document.getElementById("app-subtitle");
 const homeView = document.getElementById("home-view");
 const authView = document.getElementById("auth-view");
 const profilesView = document.getElementById("profiles-view");
+const recentGamesView = document.getElementById("recent-games-view");
 const playerProfileView = document.getElementById("player-profile-view");
+const gameHistoryView = document.getElementById("game-history-view");
 const gamePickerEl = document.getElementById("game-picker");
 const setupView = document.getElementById("setup-view");
 const gameView = document.getElementById("game-view");
@@ -77,6 +80,14 @@ function updateAppHeader(view) {
     return;
   }
 
+  if (view === "game-history") {
+    appTitle.textContent = "Game history";
+    appSubtitle.textContent = "Completed games for this account";
+    document.title = "Game history — Game Scorer";
+    document.body.dataset.theme = "home";
+    return;
+  }
+
   if (gameDef) {
     appTitle.textContent = `${gameDef.icon} ${gameDef.name}`;
     document.title = `${gameDef.name} — Game Scorer`;
@@ -106,7 +117,9 @@ function showView(view, gameId = selectedGameId) {
   homeView.classList.toggle("hidden", view !== "home");
   authView?.classList.toggle("hidden", view !== "auth");
   profilesView?.classList.toggle("hidden", view !== "home");
+  recentGamesView?.classList.toggle("hidden", view !== "home");
   playerProfileView?.classList.toggle("hidden", view !== "player-profile");
+  gameHistoryView?.classList.toggle("hidden", view !== "game-history");
   setupView.classList.toggle("hidden", view !== "setup");
 
   document.getElementById("skull-king-setup").classList.toggle("hidden", view !== "setup" || !isSkullKing);
@@ -162,6 +175,7 @@ function showHomeView() {
   }
   selectedGameId = DEFAULT_GAME_ID;
   showView("home");
+  renderHomeRecentGames();
 }
 
 function showAuthView() {
@@ -208,9 +222,15 @@ bindProfileNavigation({
   },
 });
 
+bindGameHistoryNavigation({
+  showView,
+  showHomeView,
+});
+
 bindAuthNavigation({
   showAuthView,
   showHomeView,
+  resumeCurrentAccount,
 });
 
 function wireShellEvents() {
@@ -239,9 +259,23 @@ function wireShellEvents() {
   });
 }
 
+export function resumeCurrentAccount() {
+  if (!isSignedIn()) {
+    showAuthView();
+    return;
+  }
+  Object.values(gameModules).forEach((mod) => mod.clearGame());
+  initFromSavedGame();
+}
+
 export async function startApp() {
   renderGamePicker();
   wireShellEvents();
+
+  if (isPasswordRecoveryPending()) {
+    showAuthView();
+    return;
+  }
 
   if (!isSignedIn()) {
     showAuthView();

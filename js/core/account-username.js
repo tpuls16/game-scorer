@@ -1,6 +1,7 @@
 import { getCurrentUser, subscribeAuth } from "./auth.js";
 import { getSupabaseClient } from "./supabase-client.js";
 import { normalizeFamilyUsername } from "./family-username.js";
+import { updateSavedAccountMeta } from "./saved-accounts.js";
 
 export { normalizeFamilyUsername } from "./family-username.js";
 
@@ -45,6 +46,10 @@ export async function loadAccountUsername() {
   }
 
   accountUsername = data?.username ?? null;
+  updateSavedAccountMeta(user.id, {
+    username: accountUsername,
+    email: user.email ?? null,
+  });
   notify();
   return accountUsername;
 }

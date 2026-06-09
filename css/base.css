@@ -605,11 +605,13 @@ td.round-link:hover {
 .settings-dialog-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 0;
   background: rgba(4, 10, 20, 0.72);
 }
 
 .settings-dialog-panel {
   position: relative;
+  z-index: 1;
   width: min(100%, 640px);
   margin: 1rem auto 2rem;
 }
@@ -918,6 +920,40 @@ td.round-link:hover {
 
 .player-picker-actions {
   margin-top: 0.25rem;
+}
+
+.setup-subsection-compact {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.setup-subsection-compact h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+}
+
+.setup-subsection-compact .hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+}
+
+.player-picker-guest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.player-picker-guest-list.is-empty {
+  display: none;
+}
+
+.btn-add-guest {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
 }
 
 .players-setup-section {

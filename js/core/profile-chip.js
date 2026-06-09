@@ -1,4 +1,4 @@
-import { loadProfilesSplit, getProfileById } from "./profiles.js";
+import { loadProfilesSplit, loadProfilesSorted, getProfileById } from "./profiles.js";
 import { createProfileOpenButton } from "./player-profile-page.js";
 
 /**
@@ -32,6 +32,40 @@ export function renderFavoriteProfileChips(container, {
   });
 
   return favorites.length;
+}
+
+/**
+ * @param {HTMLElement} container
+ * @param {{ isSelected: (profile: { id: string, name: string, favorite: boolean }) => boolean, onToggle: (profile: { id: string, name: string, favorite: boolean }) => void, profileBackContext?: { view: "home" | "setup", gameId?: string } }} options
+ */
+export function renderSavedProfileChips(container, {
+  isSelected,
+  onToggle,
+  profileBackContext = { view: "home" },
+}) {
+  container.innerHTML = "";
+  const sorted = loadProfilesSorted();
+
+  sorted.forEach((profile) => {
+    const row = document.createElement("div");
+    row.className = "profile-chip-row";
+    if (profile.favorite) row.classList.add("is-favorite");
+
+    const selectBtn = document.createElement("button");
+    selectBtn.type = "button";
+    selectBtn.className = "profile-chip";
+    selectBtn.dataset.profileId = profile.id;
+    selectBtn.textContent = profile.favorite ? `★ ${profile.name}` : profile.name;
+    const selected = isSelected(profile);
+    selectBtn.setAttribute("aria-pressed", selected ? "true" : "false");
+    selectBtn.classList.toggle("is-selected", selected);
+    selectBtn.addEventListener("click", () => onToggle(profile));
+
+    row.append(selectBtn, createProfileOpenButton(profile, profileBackContext));
+    container.append(row);
+  });
+
+  return sorted.length;
 }
 
 /**

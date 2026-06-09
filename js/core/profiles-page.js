@@ -1,31 +1,22 @@
 import { subscribeAuth } from "./auth.js";
 import {
   loadProfiles,
-  loadProfilesSplit,
-  getProfileById,
+  loadProfilesSorted,
   addProfile,
   updateProfile,
   removeProfile,
   subscribeProfiles,
 } from "./profiles.js";
-import { mountOtherProfilesDropdown } from "./profile-chip.js";
 import { createProfileOpenButton } from "./player-profile-page.js";
 import { createFavoriteToggleButton } from "./profile-favorite.js";
 
-let profilesFavoritesListEl = null;
-let profilesOtherDetailEl = null;
-let profilesOtherDropdownHost = null;
-/** @type {ReturnType<mountOtherProfilesDropdown> | null} */
-let otherProfilesDropdown = null;
+let profilesListEl = null;
 let addProfileForm = null;
 let addProfileInput = null;
 let profilesEmptyHint = null;
-let profilesFavoritesEmptyHint = null;
 let saveProfileBtn = null;
 /** @type {string | null} */
 let editingProfileId = null;
-/** @type {string | null} */
-let selectedOtherProfileId = null;
 
 /**
  * @param {HTMLElement} container
@@ -105,7 +96,6 @@ function appendProfileListItem(container, profile) {
     if (!current) return;
     if (!confirm(`Remove "${current.name}" from saved players?`)) return;
     if (editingProfileId === profile.id) editingProfileId = null;
-    if (selectedOtherProfileId === profile.id) selectedOtherProfileId = null;
     removeProfile(profile.id);
   });
 
@@ -115,42 +105,14 @@ function appendProfileListItem(container, profile) {
 }
 
 function renderProfilesList() {
-  if (!profilesFavoritesListEl) return;
+  if (!profilesListEl) return;
 
-  const all = loadProfiles();
-  const { favorites, others } = loadProfilesSplit();
+  const sorted = loadProfilesSorted();
 
-  profilesEmptyHint?.classList.toggle("hidden", all.length > 0);
-  profilesFavoritesEmptyHint?.classList.toggle(
-    "hidden",
-    favorites.length > 0 || all.length === 0
-  );
+  profilesEmptyHint?.classList.toggle("hidden", sorted.length > 0);
 
-  profilesFavoritesListEl.innerHTML = "";
-  favorites.forEach((profile) => appendProfileListItem(profilesFavoritesListEl, profile));
-
-  otherProfilesDropdown?.refresh();
-
-  const selected = selectedOtherProfileId ? getProfileById(selectedOtherProfileId) : null;
-  if (!selected || selected.favorite) {
-    selectedOtherProfileId = null;
-    profilesOtherDetailEl?.classList.add("hidden");
-    if (profilesOtherDetailEl) profilesOtherDetailEl.innerHTML = "";
-    if (otherProfilesDropdown?.select) otherProfilesDropdown.select.value = "";
-  } else {
-    profilesOtherDetailEl?.classList.remove("hidden");
-    if (profilesOtherDetailEl) {
-      profilesOtherDetailEl.innerHTML = "";
-      appendProfileListItem(profilesOtherDetailEl, selected);
-    }
-    if (otherProfilesDropdown?.select) {
-      otherProfilesDropdown.select.value = selected.id;
-    }
-  }
-
-  if (others.length === 0) {
-    selectedOtherProfileId = null;
-  }
+  profilesListEl.innerHTML = "";
+  sorted.forEach((profile) => appendProfileListItem(profilesListEl, profile));
 }
 
 function startRename(profileId) {
@@ -210,7 +172,6 @@ function saveProfileFromInput() {
     }
     addProfileInput.value = "";
     addProfileInput.focus();
-    selectedOtherProfileId = created.id;
     renderProfilesList();
   } catch (error) {
     alert(error instanceof Error ? error.message : "Could not save player.");
@@ -223,29 +184,15 @@ function handleAddProfile(event) {
 }
 
 export function initProfilesPage() {
-  profilesFavoritesListEl = document.getElementById("profiles-favorites-list");
-  profilesOtherDetailEl = document.getElementById("profiles-other-detail");
-  profilesOtherDropdownHost = document.getElementById("profiles-other-dropdown-host");
+  profilesListEl = document.getElementById("profiles-list");
   addProfileForm = document.getElementById("add-profile-form");
   addProfileInput = document.getElementById("add-profile-name");
   profilesEmptyHint = document.getElementById("profiles-empty-hint");
-  profilesFavoritesEmptyHint = document.getElementById("profiles-favorites-empty-hint");
   saveProfileBtn = document.getElementById("add-profile-save-btn");
 
-  if (!profilesFavoritesListEl || !addProfileForm || !addProfileInput) {
+  if (!profilesListEl || !addProfileForm || !addProfileInput) {
     console.error("Saved players UI elements are missing from the page.");
     return;
-  }
-
-  if (profilesOtherDropdownHost) {
-    otherProfilesDropdown = mountOtherProfilesDropdown({
-      placeholder: "Select a player to manage…",
-      onPick: (profile) => {
-        selectedOtherProfileId = profile.id;
-        renderProfilesList();
-      },
-    });
-    profilesOtherDropdownHost.append(otherProfilesDropdown.element);
   }
 
   addProfileForm.addEventListener("submit", handleAddProfile);
@@ -257,9 +204,6 @@ export function initProfilesPage() {
   subscribeProfiles(() => {
     if (editingProfileId && !loadProfiles().some((p) => p.id === editingProfileId)) {
       editingProfileId = null;
-    }
-    if (selectedOtherProfileId && !getProfileById(selectedOtherProfileId)) {
-      selectedOtherProfileId = null;
     }
     renderProfilesList();
   });
