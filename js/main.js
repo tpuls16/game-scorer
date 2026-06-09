@@ -3,6 +3,7 @@ import "./core/account-username.js";
 import { initAuthPage } from "./core/auth-page.js";
 import { initProfileSync } from "./core/profile-sync.js";
 import "./core/player-profile-page.js";
+import "./core/game-history-page.js";
 import "./core/profiles-page.js";
 import { startApp } from "./core/shell.js";
 

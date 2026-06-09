@@ -258,3 +258,18 @@ export function formatHistoryDate(iso) {
     day: "numeric",
   });
 }
+
+/** @param {string} iso */
+export function formatHistoryDateShort(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/** @param {number} [limit] @returns {GameHistoryEntry[]} */
+export function getRecentGameHistory(limit = 3) {
+  return loadGameHistory().slice(0, limit);
+}
