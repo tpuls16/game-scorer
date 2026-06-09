@@ -23,7 +23,9 @@
         <p id="app-subtitle">Choose a game to start scoring</p>
         <div id="account-bar" class="account-bar hidden">
           <div id="account-signed-in" class="account-signed-in">
-            <span id="account-email" class="account-email"></span>
+            <span id="account-identity" class="account-identity">
+              <span id="account-username" class="account-username hidden">Family</span>
+            </span>
             <button type="button" id="account-sign-out-btn" class="btn btn-secondary btn-account">
               Sign out
             </button>
@@ -32,12 +34,12 @@
       </header>
 
       <section id="auth-view" class="card hidden">
-        <h2>Sign in to play</h2>
-        <p class="hint">
-          Sign in or create an account to pick a game and save your players. Game scores still save on this device for now.
+        <h2 id="auth-heading">Sign in to play</h2>
+        <p id="auth-hint" class="hint">
+          One login for the whole family. Sign in with your family username or email.
         </p>
 
-        <div class="auth-mode-toggle" role="tablist" aria-label="Sign in or create account">
+        <div id="auth-mode-toggle" class="auth-mode-toggle" role="tablist" aria-label="Sign in or create account">
           <button type="button" id="auth-mode-sign-in" class="auth-mode-btn is-active" role="tab">
             Sign in
           </button>
@@ -47,15 +49,43 @@
         </div>
 
         <form id="auth-form" class="auth-form">
-          <label for="auth-email">Email</label>
-          <input
-            type="email"
-            id="auth-email"
-            name="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            required
-          />
+          <div id="auth-sign-in-fields">
+            <label for="auth-login-id">Email or family username</label>
+            <input
+              type="text"
+              id="auth-login-id"
+              name="loginId"
+              autocomplete="username"
+              placeholder="PulsipherGameNight or family@example.com"
+              required
+            />
+          </div>
+
+          <div id="auth-sign-up-fields" class="hidden">
+            <label for="auth-email">Family email</label>
+            <input
+              type="email"
+              id="auth-email"
+              name="email"
+              autocomplete="email"
+              placeholder="family@example.com"
+            />
+
+            <label for="auth-family-username">Family username</label>
+            <input
+              type="text"
+              id="auth-family-username"
+              name="familyUsername"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              maxlength="32"
+              placeholder="PulsipherGameNight"
+            />
+            <p class="hint auth-field-hint">
+              Letters, numbers, and underscores only. Everyone in your family can sign in with this instead of email.
+            </p>
+          </div>
 
           <label for="auth-password">Password</label>
           <input
@@ -83,9 +113,9 @@
       </section>
 
       <section id="profiles-view" class="card">
-        <h2>Your players</h2>
+        <h2>Saved players</h2>
         <p class="hint">
-          Names on your account for game setup (e.g. Mom, Dad, Tyson). Star favorites to show them here and when you start a game; everyone else stays in the menu below.
+          Everyone who plays with this account (e.g. Mom, Dad, Tyson). Star favorites to show them here and when you start a game; everyone else stays in the menu below.
         </p>
         <p id="profiles-sync-hint" class="hint profiles-sync-hint">
           Changes sync to your account.
@@ -120,66 +150,6 @@
         </form>
       </section>
 
-      <section id="households-view" class="card">
-        <h2>Households</h2>
-        <p class="hint">
-          Join a household so everyone can invite players from their own accounts and follow live scores during games.
-        </p>
-
-        <p id="households-empty-hint" class="hint households-empty-hint">
-          You're not in a household yet. Create one for your family or join with an invite code below.
-        </p>
-
-        <div id="households-list" class="households-list" aria-live="polite"></div>
-
-        <div id="households-live-scores" class="households-live-scores hidden">
-          <h3 class="households-subheading">Live scores</h3>
-          <p class="hint coming-soon-note">
-            When household members are playing, active game scores will show up here — coming soon.
-          </p>
-        </div>
-
-        <div class="households-actions">
-          <form id="join-household-form" class="household-form">
-            <h3 class="households-subheading">Join with invite code</h3>
-            <p class="hint">Ask a household owner for their code, or look up a code someone shared with you.</p>
-            <div class="household-form-row">
-              <label class="visually-hidden" for="join-household-code">Invite code</label>
-              <input
-                type="text"
-                id="join-household-code"
-                name="inviteCode"
-                placeholder="Invite code"
-                maxlength="12"
-                autocomplete="off"
-                required
-              />
-              <button type="submit" class="btn btn-primary">Join</button>
-            </div>
-            <p id="join-household-status" class="household-status hidden" aria-live="polite"></p>
-          </form>
-
-          <form id="create-household-form" class="household-form">
-            <h3 class="households-subheading">Create a household</h3>
-            <p class="hint">Start a new household and share the invite code so others can join from their accounts.</p>
-            <div class="household-form-row">
-              <label class="visually-hidden" for="create-household-name">Household name</label>
-              <input
-                type="text"
-                id="create-household-name"
-                name="householdName"
-                placeholder="e.g. Pulsipher family"
-                maxlength="48"
-                autocomplete="off"
-                required
-              />
-              <button type="submit" class="btn btn-secondary">Create</button>
-            </div>
-            <p id="create-household-status" class="household-status hidden" aria-live="polite"></p>
-          </form>
-        </div>
-      </section>
-
       <section id="player-profile-view" class="card hidden">
         <div class="view-toolbar">
           <button type="button" id="player-profile-back-btn" class="btn btn-secondary btn-back">
@@ -190,7 +160,7 @@
         <p class="hint">Individual player stats and history.</p>
         <div class="setup-section">
           <h3>Game history</h3>
-          <p id="player-profile-coming-soon" class="hint coming-soon-note">Coming soon — game history is not connected yet.</p>
+          <p id="player-profile-coming-soon" class="hint coming-soon-note hidden">No completed games yet for this player.</p>
           <div id="player-profile-history" class="player-profile-history"></div>
         </div>
       </section>

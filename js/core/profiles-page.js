@@ -233,7 +233,7 @@ export function initProfilesPage() {
   saveProfileBtn = document.getElementById("add-profile-save-btn");
 
   if (!profilesFavoritesListEl || !addProfileForm || !addProfileInput) {
-    console.error("Household players UI elements are missing from the page.");
+    console.error("Saved players UI elements are missing from the page.");
     return;
   }
 

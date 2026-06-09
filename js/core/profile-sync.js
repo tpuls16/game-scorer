@@ -7,7 +7,7 @@ import {
   setAfterPersistCallback,
   setProfilesUserId,
 } from "./profiles.js";
-import { setActiveUserId } from "./user-storage.js";
+import { migrateAccountScopedStorage, setActiveUserId } from "./user-storage.js";
 
 /** @typedef {{ id: string, name: string, favorite: boolean }} PlayerProfile */
 
@@ -29,43 +29,41 @@ function normalizeProfiles(profiles) {
 }
 
 /**
+ * @param {string} userId
  * @returns {Promise<PlayerProfile[]>}
  */
-async function fetchCloudProfiles() {
-  const user = getCurrentUser();
-  if (!user) return [];
-
+async function fetchCloudProfiles(userId) {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("player_profiles")
     .select("id, name, favorite")
+    .eq("user_id", userId)
     .order("name");
 
   if (error) {
-    console.error("Failed to load cloud profiles", error);
-    throw new Error("Could not load your saved players from the cloud.");
+    console.error("Failed to load players from cloud", error);
+    throw new Error("Could not load players from the cloud.");
   }
 
   return normalizeProfiles(data ?? []);
 }
 
 /**
+ * @param {string} userId
  * @param {PlayerProfile[]} profiles
  */
-async function pushProfilesToCloud(profiles) {
-  const user = getCurrentUser();
-  if (!user) return;
-
+async function pushProfilesToCloud(userId, profiles) {
   const supabase = getSupabaseClient();
   const normalized = normalizeProfiles(profiles);
 
   const { data: existing, error: fetchError } = await supabase
     .from("player_profiles")
-    .select("id");
+    .select("id")
+    .eq("user_id", userId);
 
   if (fetchError) {
-    console.error("Failed to list cloud profiles for sync", fetchError);
-    throw new Error("Could not sync saved players to the cloud.");
+    console.error("Failed to list cloud players for sync", fetchError);
+    throw new Error("Could not sync players to the cloud.");
   }
 
   const localIds = new Set(normalized.map((p) => p.id));
@@ -79,8 +77,8 @@ async function pushProfilesToCloud(profiles) {
       .delete()
       .in("id", toDelete);
     if (deleteError) {
-      console.error("Failed to delete removed cloud profiles", deleteError);
-      throw new Error("Could not sync saved players to the cloud.");
+      console.error("Failed to delete removed cloud players", deleteError);
+      throw new Error("Could not sync players to the cloud.");
     }
   }
 
@@ -88,7 +86,7 @@ async function pushProfilesToCloud(profiles) {
 
   const rows = normalized.map((p) => ({
     id: p.id,
-    user_id: user.id,
+    user_id: userId,
     name: p.name,
     favorite: p.favorite,
     updated_at: new Date().toISOString(),
@@ -99,25 +97,28 @@ async function pushProfilesToCloud(profiles) {
   });
 
   if (upsertError) {
-    console.error("Failed to upsert cloud profiles", upsertError);
-    throw new Error("Could not sync saved players to the cloud.");
+    console.error("Failed to upsert cloud players", upsertError);
+    throw new Error("Could not sync players to the cloud.");
   }
 }
 
 export async function syncProfilesToCloud(profiles) {
-  if (!cloudSyncEnabled) return;
-  await pushProfilesToCloud(profiles);
+  if (!cloudSyncEnabled || syncInProgress) return;
+  const user = getCurrentUser();
+  if (!user) return;
+  await pushProfilesToCloud(user.id, profiles);
 }
 
-async function mergeOnSignIn() {
+export async function syncAccountPlayers() {
   const user = getCurrentUser();
   if (!user) return;
 
   syncInProgress = true;
   try {
+    migrateAccountScopedStorage(user.id);
     migrateLegacyProfilesForUser(user.id);
 
-    const cloud = await fetchCloudProfiles();
+    const cloud = await fetchCloudProfiles(user.id);
     const local = loadProfiles();
 
     if (cloud.length > 0) {
@@ -126,7 +127,7 @@ async function mergeOnSignIn() {
     }
 
     if (local.length > 0) {
-      await pushProfilesToCloud(local);
+      await pushProfilesToCloud(user.id, local);
       return;
     }
 
@@ -147,8 +148,9 @@ function bindUserSession(user) {
   setActiveUserId(user.id);
   setProfilesUserId(user.id);
   cloudSyncEnabled = true;
-  mergeOnSignIn().catch((error) => {
-    console.error("Profile sync on sign-in failed", error);
+
+  syncAccountPlayers().catch((error) => {
+    console.error("Player sync failed", error);
   });
 }
 
@@ -157,7 +159,7 @@ export function initProfileSync() {
     if (!cloudSyncEnabled || syncInProgress) return;
     if (!getCurrentUser()) return;
     syncProfilesToCloud(profiles).catch((error) => {
-      console.error("Profile cloud sync failed", error);
+      console.error("Player cloud sync failed", error);
     });
   });
 

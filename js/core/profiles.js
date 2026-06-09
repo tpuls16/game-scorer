@@ -1,4 +1,5 @@
 const STORAGE_KEY_PREFIX = "game-scorer-profiles";
+const LEGACY_HOUSEHOLD_PLAYERS_PREFIX = "game-scorer-household-players";
 const LEGACY_STORAGE_KEY = "game-scorer-profiles";
 const LEGACY_OWNER_KEY = "game-scorer-profiles-owner";
 const STORAGE_VERSION = 1;
@@ -57,7 +58,7 @@ function writeLocalProfiles(profiles) {
       JSON.stringify({ version: STORAGE_VERSION, profiles })
     );
   } catch (error) {
-    console.error("Failed to save your players", error);
+    console.error("Failed to save players", error);
     throw new Error(
       "Could not save to browser storage. Check that storage is enabled and you are not in private browsing with storage blocked."
     );
@@ -72,19 +73,41 @@ function createProfileId() {
   return `profile-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-/** One-time move from pre-scoped localStorage to per-user key. */
+/**
+ * One-time import from legacy storage into the current account roster.
+ * @param {string} userId
+ */
 export function migrateLegacyProfilesForUser(userId) {
   const scopedKey = `${STORAGE_KEY_PREFIX}-${userId}`;
   if (localStorage.getItem(scopedKey)) return;
 
-  const legacyOwner = localStorage.getItem(LEGACY_OWNER_KEY);
-  const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
-  if (!legacyRaw) return;
-  if (legacyOwner && legacyOwner !== userId) return;
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key?.startsWith(`${LEGACY_HOUSEHOLD_PLAYERS_PREFIX}-`)) continue;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      localStorage.setItem(scopedKey, raw);
+      return;
+    }
+  }
 
-  localStorage.setItem(scopedKey, legacyRaw);
-  localStorage.removeItem(LEGACY_STORAGE_KEY);
-  localStorage.removeItem(LEGACY_OWNER_KEY);
+  const legacyRaw =
+    localStorage.getItem(scopedKey) ??
+    (() => {
+      const legacyOwner = localStorage.getItem(LEGACY_OWNER_KEY);
+      if (legacyOwner && legacyOwner !== userId) return null;
+      return localStorage.getItem(LEGACY_STORAGE_KEY);
+    })();
+
+  if (!legacyRaw) return;
+
+  try {
+    const data = JSON.parse(legacyRaw);
+    if (!Array.isArray(data?.profiles) || data.profiles.length === 0) return;
+    localStorage.setItem(scopedKey, JSON.stringify({ version: STORAGE_VERSION, profiles: data.profiles }));
+  } catch {
+    // ignore corrupt legacy data
+  }
 }
 
 /** @returns {PlayerProfile[]} */
@@ -114,7 +137,7 @@ export function compareProfileNames(a, b) {
   return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 }
 
-/** Favorites first, then alphabetical by name. @param {PlayerProfile} a @param {PlayerProfile} b */
+/** @param {PlayerProfile} a @param {PlayerProfile} b */
 export function compareProfiles(a, b) {
   if (a.favorite !== b.favorite) {
     return a.favorite ? -1 : 1;
@@ -136,7 +159,7 @@ export function loadProfilesSplit() {
   };
 }
 
-/** Replace local saved players without triggering cloud sync (e.g. after pull). */
+/** Replace local roster without triggering cloud sync (e.g. after pull). */
 export function replaceProfiles(profiles) {
   writeLocalProfiles(normalizeProfiles(profiles));
 }

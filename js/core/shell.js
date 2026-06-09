@@ -8,7 +8,6 @@ const appSubtitle = document.getElementById("app-subtitle");
 const homeView = document.getElementById("home-view");
 const authView = document.getElementById("auth-view");
 const profilesView = document.getElementById("profiles-view");
-const householdsView = document.getElementById("households-view");
 const playerProfileView = document.getElementById("player-profile-view");
 const gamePickerEl = document.getElementById("game-picker");
 const setupView = document.getElementById("setup-view");
@@ -107,7 +106,6 @@ function showView(view, gameId = selectedGameId) {
   homeView.classList.toggle("hidden", view !== "home");
   authView?.classList.toggle("hidden", view !== "auth");
   profilesView?.classList.toggle("hidden", view !== "home");
-  householdsView?.classList.toggle("hidden", view !== "home");
   playerProfileView?.classList.toggle("hidden", view !== "player-profile");
   setupView.classList.toggle("hidden", view !== "setup");
 
@@ -241,12 +239,14 @@ function wireShellEvents() {
   });
 }
 
-export function startApp() {
+export async function startApp() {
   renderGamePicker();
   wireShellEvents();
-  if (isSignedIn()) {
-    initFromSavedGame();
-  } else {
+
+  if (!isSignedIn()) {
     showAuthView();
+    return;
   }
+
+  initFromSavedGame();
 }

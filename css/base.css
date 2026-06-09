@@ -932,6 +932,12 @@ td.round-link:hover {
   gap: 0.5rem;
 }
 
+.profile-chip-owner {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  align-self: center;
+}
+
 .profile-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -1011,6 +1017,12 @@ body[data-theme="skull-king"] .profile-chip[aria-pressed="true"] {
   flex: 1;
   font-weight: 600;
   color: var(--gold-light);
+}
+
+.roster-guest-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  align-self: center;
 }
 
 .roster-player-badge {

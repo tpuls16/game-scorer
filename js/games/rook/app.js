@@ -21,6 +21,8 @@ import {
   hasReachedTarget,
   buildTeamLabels,
 } from "./scoring.js";
+import { tryRecordGameHistory } from "../../core/game-history.js";
+import { mapRookPlayers, rosterRefsFromGamePlayers } from "../../core/game-players.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
 import { scopedStorageKey } from "../../core/user-storage.js";
 
@@ -101,16 +103,17 @@ function clearGame() {
   game = null;
 }
 
-/** @param {string[]} playerNames @param {{ totalHands?: number, targetScore?: number }} [options] */
-function createEmptyGame(playerNames, options = {}) {
+/** @param {import("../../core/game-players.js").GamePlayerRef[]} playerRefs @param {{ totalHands?: number, targetScore?: number }} [options] */
+function createEmptyGame(playerRefs, options = {}) {
+  const names = playerRefs.map((player) => player.name);
   const teamIndices = [
     [0, 1],
     [2, 3],
   ];
-  const teamLabels = buildTeamLabels(playerNames, teamIndices);
+  const teamLabels = buildTeamLabels(names, teamIndices);
   return {
     gameId: "rook",
-    players: playerNames.map((name) => ({ name })),
+    players: mapRookPlayers(playerRefs),
     teams: teamIndices,
     teamLabels,
     rounds: [],
@@ -451,6 +454,7 @@ function renderGameOver() {
     .join("");
 
   renderScoreboard(gameOverScoreboard);
+  if (tryRecordGameHistory(game)) saveGame();
   showView("over");
 }
 
@@ -521,8 +525,8 @@ function undoLastHand() {
   renderGameView();
 }
 
-function startGame(playerNames, options) {
-  game = createEmptyGame(playerNames, options);
+function startGame(playerRefs, options) {
+  game = createEmptyGame(playerRefs, options);
   saveGame();
   showView("game");
   renderGameView();
@@ -545,7 +549,7 @@ function openGameSettings() {
   if (!game) return;
   settingsTotalHandsInput.value = String(game.totalHands);
   if (settingsTargetScoreInput) settingsTargetScoreInput.value = String(game.targetScore);
-  settingsPlayerPicker.setPlayerNames(game.players.map((p) => p.name));
+  settingsPlayerPicker.setRosterFromPlayers(rosterRefsFromGamePlayers(game.players));
   settingsDialog.classList.remove("hidden");
 }
 
@@ -554,6 +558,7 @@ function closeGameSettings() {
 }
 
 function saveGameSettings() {
+  const playerRefs = settingsPlayerPicker.getPlayersForGame();
   const names = settingsPlayerPicker.getPlayerNames();
   const totalHands = Math.max(1, Math.min(30, Number(settingsTotalHandsInput.value)));
   const targetScore = Math.max(
@@ -570,7 +575,7 @@ function saveGameSettings() {
     return;
   }
 
-  game.players = names.map((name) => ({ name }));
+  game.players = mapRookPlayers(playerRefs);
   game.teams = [
     [0, 1],
     [2, 3],
@@ -590,6 +595,7 @@ function saveGameSettings() {
 
 function bindEvents({ showExitGameConfirm }) {
   document.getElementById("rook-start-game-btn")?.addEventListener("click", () => {
+    const playerRefs = setupPlayerPicker.getPlayersForGame();
     const names = setupPlayerPicker.getPlayerNames();
     const totalHands = Math.max(1, Math.min(30, Number(totalHandsInput?.value ?? DEFAULT_TOTAL_HANDS)));
     const targetScore = Math.max(100, Math.min(1000, Number(targetScoreInput?.value ?? DEFAULT_TARGET_SCORE)));
@@ -603,7 +609,7 @@ function bindEvents({ showExitGameConfirm }) {
       return;
     }
 
-    startGame(names, { totalHands, targetScore });
+    startGame(playerRefs, { totalHands, targetScore });
   });
 
   handForm?.addEventListener("submit", (event) => {

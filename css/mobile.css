@@ -108,14 +108,12 @@
     padding: 0.85rem;
   }
 
-  body[data-theme="home"] .household-form-row,
-  body[data-theme="home"] .household-invite-row {
+  body[data-theme="home"] .household-form-row {
     flex-direction: column;
     align-items: stretch;
   }
 
-  body[data-theme="home"] .household-form-row .btn,
-  body[data-theme="home"] .household-invite-row .btn {
+  body[data-theme="home"] .household-form-row .btn {
     width: 100%;
   }
 

@@ -3,18 +3,25 @@ import { renderFavoriteProfileChips, mountOtherProfilesDropdown } from "./profil
 import { createProfileOpenButton } from "./player-profile-page.js";
 
 /**
- * @typedef {{ name: string, profileId?: string }} RosterEntry
+ * @typedef {{ name: string, isGuest?: boolean, profileId?: string }} RosterEntry
+ * @typedef {{ name: string, profileId?: string, guest?: boolean }} GamePlayerRef
  */
 
 function createNoopPicker() {
   return {
     getPlayerNames: () => [],
-    setPlayerNames: () => {},
+    getPlayersForGame: () => [],
+    setRosterFromPlayers: () => {},
     getPlayerCount: () => 0,
     addGuest: () => {},
     destroy: () => {},
     refreshProfiles: () => {},
   };
+}
+
+/** @param {RosterEntry} entry */
+function isGuestEntry(entry) {
+  return Boolean(entry.isGuest);
 }
 
 /**
@@ -34,13 +41,13 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
   const root = document.createElement("div");
   root.className = "player-picker";
 
-  const householdSection = document.createElement("div");
-  householdSection.className = "player-picker-household setup-subsection";
-  const householdHeading = document.createElement("h4");
-  householdHeading.textContent = "Your players";
-  const householdHint = document.createElement("p");
-  householdHint.className = "hint";
-  householdHint.textContent =
+  const rosterSection = document.createElement("div");
+  rosterSection.className = "player-picker-saved setup-subsection";
+  const rosterHeading = document.createElement("h4");
+  rosterHeading.textContent = "Saved players";
+  const rosterHint = document.createElement("p");
+  rosterHint.className = "hint";
+  rosterHint.textContent =
     "Tap a favorite to add them, or choose another saved player from the menu.";
   const chipsEl = document.createElement("div");
   chipsEl.className = "profile-chips";
@@ -51,10 +58,11 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
   const chipsEmpty = document.createElement("p");
   chipsEmpty.className = "hint profile-chips-empty";
   chipsEmpty.textContent =
-    "No saved players yet. Add names on the home screen under Your players.";
+    "No saved players yet. Add names on the home screen under Saved players.";
 
   const otherProfilesDropdown = mountOtherProfilesDropdown({
     placeholder: "Add another saved player…",
+    labelText: "Other saved players",
     onPick: (profile) => toggleProfile(profile),
     isOptionDisabled: (profile) =>
       roster.length >= maxPlayers ||
@@ -65,10 +73,10 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
   });
   otherDropdownHost.append(otherProfilesDropdown.element);
 
-  const rosterSection = document.createElement("div");
-  rosterSection.className = "player-picker-roster setup-subsection";
-  const rosterHeading = document.createElement("h4");
-  rosterHeading.textContent = "Playing this game";
+  const playingSection = document.createElement("div");
+  playingSection.className = "player-picker-roster setup-subsection";
+  const playingHeading = document.createElement("h4");
+  playingHeading.textContent = "Playing this game";
   const rosterEl = document.createElement("div");
   rosterEl.className = "game-roster";
   rosterEl.setAttribute("aria-label", "Players in this game");
@@ -80,16 +88,10 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
   addGuestBtn.className = "btn btn-secondary";
   addGuestBtn.textContent = "+ Add guest";
 
-  householdSection.append(
-    householdHeading,
-    householdHint,
-    chipsEl,
-    otherDropdownHost,
-    chipsEmpty
-  );
-  rosterSection.append(rosterHeading, rosterEl);
+  rosterSection.append(rosterHeading, rosterHint, chipsEl, otherDropdownHost, chipsEmpty);
+  playingSection.append(playingHeading, rosterEl);
   actions.append(addGuestBtn);
-  root.append(householdSection, rosterSection, actions);
+  root.append(rosterSection, playingSection, actions);
   hostEl.innerHTML = "";
   hostEl.appendChild(root);
 
@@ -118,7 +120,7 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
       chipsEmpty.classList.remove("hidden");
     } else if (total === 0) {
       chipsEmpty.textContent =
-        "No saved players yet. Add names on the home screen under Your players.";
+        "No saved players yet. Add names on the home screen under Saved players.";
     }
   }
 
@@ -146,6 +148,10 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
     const row = document.createElement("div");
     row.className = "player-input-row roster-guest";
 
+    const badge = document.createElement("span");
+    badge.className = "roster-player-badge roster-guest-badge";
+    badge.textContent = "Guest";
+
     const input = document.createElement("input");
     input.type = "text";
     input.placeholder = "Guest name";
@@ -166,7 +172,7 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
       if (index >= 0) removeRosterEntry(index);
     });
 
-    row.append(input, removeBtn);
+    row.append(badge, input, removeBtn);
     return row;
   }
 
@@ -175,7 +181,7 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
     rosterEl.innerHTML = "";
 
     roster.forEach((entry) => {
-      if (entry.profileId) {
+      if (!isGuestEntry(entry) && entry.profileId) {
         const row = document.createElement("div");
         row.className = "roster-player";
         const name = document.createElement("span");
@@ -211,14 +217,15 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
     if (roster.length === 0) {
       const empty = document.createElement("p");
       empty.className = "hint roster-empty";
-      empty.textContent = "No players selected — tap saved player names above or add a guest.";
+      empty.textContent =
+        "No players selected — tap saved player names above or add a guest.";
       rosterEl.append(empty);
     }
   }
 
   function addGuest(value = "") {
     if (roster.length >= maxPlayers) return;
-    roster.push({ name: value });
+    roster.push({ name: value, isGuest: true });
     render();
     const lastInput = rosterEl.querySelector(".roster-guest:last-child input");
     lastInput?.focus();
@@ -231,14 +238,41 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
     return roster.map((entry) => entry.name.trim()).filter(Boolean);
   }
 
-  function setPlayerNames(names) {
+  /** @returns {GamePlayerRef[]} */
+  function getPlayersForGame() {
+    return roster
+      .map((entry) => {
+        const name = entry.name.trim();
+        if (!name) return null;
+        return isGuestEntry(entry)
+          ? { name, guest: true }
+          : { name, profileId: entry.profileId };
+      })
+      .filter(Boolean);
+  }
+
+  /** @param {GamePlayerRef[]} players */
+  function setRosterFromPlayers(players) {
     const profiles = loadProfiles();
-    roster = names.map((name) => {
+    roster = players.map((player) => {
+      const name = player.name ?? "";
+      if (player.guest) return { name, isGuest: true };
+
+      if (player.profileId) {
+        const byId = profiles.find((p) => p.id === player.profileId);
+        if (byId) return { name: byId.name, profileId: byId.id };
+      }
+
       const profile = profiles.find((p) => p.name.toLowerCase() === name.trim().toLowerCase());
       if (profile) return { name: profile.name, profileId: profile.id };
+
       return { name };
     });
     render();
+  }
+
+  function setPlayerNames(names) {
+    setRosterFromPlayers(names.map((name) => ({ name })));
   }
 
   function getPlayerCount() {
@@ -249,6 +283,7 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
     const profiles = loadProfiles();
     roster = roster
       .map((entry) => {
+        if (isGuestEntry(entry)) return entry;
         if (!entry.profileId) return entry;
         const profile = profiles.find((p) => p.id === entry.profileId);
         if (!profile) return null;
@@ -264,11 +299,12 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
   }
 
   unsubscribeProfiles = subscribeProfiles(refreshProfiles);
-
   render();
 
   return {
     getPlayerNames,
+    getPlayersForGame,
+    setRosterFromPlayers,
     setPlayerNames,
     getPlayerCount,
     addGuest,

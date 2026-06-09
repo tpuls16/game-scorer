@@ -160,8 +160,25 @@ body[data-theme="home"] .account-guest {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 0.5rem 0.75rem;
+}
+
+body[data-theme="home"] .account-identity {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+body[data-theme="home"] .account-username {
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .account-identity-sep {
+  color: var(--text-muted);
 }
 
 body[data-theme="home"] .account-email {
@@ -228,6 +245,11 @@ body[data-theme="home"] .auth-status.auth-status-error {
   color: var(--danger);
 }
 
+body[data-theme="home"] .auth-field-hint {
+  margin: 0.15rem 0 0.65rem;
+  font-size: 0.85rem;
+}
+
 body[data-theme="home"] .auth-submit-btn {
   width: 100%;
   margin-top: 0.25rem;
@@ -292,20 +314,56 @@ body[data-theme="home"] .households-actions {
   gap: 1rem;
 }
 
-body[data-theme="home"] .household-invite-controls {
-  margin-top: 0.75rem;
+body[data-theme="home"] .household-delete-controls {
+  margin-top: 1.25rem;
 }
 
-body[data-theme="home"] .household-invite-row {
+body[data-theme="home"] .household-delete-reveal {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: rgba(224, 120, 120, 0.65);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+body[data-theme="home"] .household-delete-reveal:hover {
+  color: var(--danger);
+}
+
+body[data-theme="home"] .household-delete-panel {
+  margin-top: 0.65rem;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(224, 120, 120, 0.35);
+  background: rgba(224, 120, 120, 0.06);
+}
+
+body[data-theme="home"] .household-delete-warning {
+  margin: 0 0 0.65rem;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+
+body[data-theme="home"] .household-delete-confirm-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+body[data-theme="home"] .household-delete-confirm-input {
+  width: 100%;
+  margin-bottom: 0.65rem;
+}
+
+body[data-theme="home"] .household-delete-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-body[data-theme="home"] .household-invite-input {
-  flex: 1;
-  min-width: 10rem;
 }
 
 body[data-theme="home"] .household-card-status {
@@ -331,4 +389,110 @@ body[data-theme="home"] .household-status {
 
 body[data-theme="home"] .household-status.household-status-error {
   color: var(--danger);
+}
+
+body[data-theme="home"] .active-household-name {
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .household-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+body[data-theme="home"] .household-picker-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(42, 38, 54, 0.55);
+}
+
+body[data-theme="home"] .household-picker-card.is-current {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+body[data-theme="home"] #household-picker-cancel-btn {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+body[data-theme="home"] .household-picker-card-name {
+  margin: 0;
+  flex: 1;
+  min-width: 10rem;
+  font-size: 1rem;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .history-entry {
+  margin-bottom: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(42, 38, 54, 0.45);
+}
+
+body[data-theme="home"] .history-entry-header {
+  margin-bottom: 0.5rem;
+}
+
+body[data-theme="home"] .history-entry-title {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .history-entry-date {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+body[data-theme="home"] .history-entry-standings {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+body[data-theme="home"] .history-entry-player {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+body[data-theme="home"] .history-entry-place {
+  color: var(--text-muted);
+  min-width: 1.5rem;
+}
+
+body[data-theme="home"] .history-player-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+body[data-theme="home"] .history-player-guest {
+  color: var(--text-muted);
+}
+
+body[data-theme="home"] .history-entry-score {
+  margin-left: auto;
+  font-weight: 600;
+}
+
+body[data-theme="home"] .history-entry-detail {
+  font-size: 0.8rem;
 }

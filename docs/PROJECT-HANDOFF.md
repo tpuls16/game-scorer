@@ -9,28 +9,31 @@ Use this doc to continue work in a new chat without losing context.
 
 | Area | State |
 |------|--------|
-| **App** | Vanilla HTML/CSS/JS on `main`; all game data in **localStorage** per browser |
-| **Live site** | **https://tpuls16.github.io/game-scorer/** via GitHub Pages (push to `main` deploys automatically) |
-| **Supabase** | Auth required; **Your players** → `player_profiles`. **Households** → create/join by invite code (`households`, `household_members`). Live scores **stub only**. Games still **localStorage** |
+| **App** | Vanilla HTML/CSS/JS on `main`; **login required** before game picker. Data **per auth account** on device (`localStorage` keys include `{userId}`) |
+| **Live site** | **https://tpuls16.github.io/game-scorer/** via GitHub Pages (push to `main` deploys ~1–2 min). No service worker — browsers may cache old JS (see [Clearing live-site cache](#clearing-live-site-cache)) |
+| **Supabase** | `game-scorer-db`: email + password auth; **Your players** → `player_profiles` (RLS per user). **Households** → create/join, owner sets/regenerates join code. Live scores **stub**. Games stay **local** per account until household sync |
 | **Themes** | Separate **home** hub theme (`css/home.css`) and **Skull King** theme (`css/games/skull-king.css`); Flip 7 / Rook keep their game CSS |
 
 ---
 
 ## What this app is
 
-A **vanilla HTML/CSS/JS** multi-game scorekeeper. No build step, no backend today.
+A **vanilla HTML/CSS/JS** multi-game scorekeeper. No build step. **Supabase** provides auth + Postgres (no custom Node/Vercel server).
 
 **Games:** **Skull King**, **Flip 7**, **Rook** (Tolman Rules).
 
-Progress saves in **localStorage**:
+**Boot order** (`js/main.js`): `initAuth` → `initProfileSync` → `initAuthPage` → `initHouseholdsPage` → `startApp`.
 
-| Key | Content |
-|-----|---------|
-| `skull-king-game` | Skull King in-progress / completed game |
-| `game-scorer-flip7` | Flip 7 game |
-| `game-scorer-rook` | Rook game |
-| `game-scorer-profiles-{userId}` | Your players — local cache **per auth account** on this device |
-| `skull-king-game-{userId}` etc. | In-progress games — local cache **per auth account** |
+Progress saves in **localStorage** (scoped per signed-in user via `user-storage.js`):
+
+| Key pattern | Content |
+|-------------|---------|
+| `game-scorer-profiles-{userId}` | Your players — local cache + cloud sync when signed in |
+| `skull-king-game-{userId}` | Skull King in-progress / completed game |
+| `game-scorer-flip7-{userId}` | Flip 7 game |
+| `game-scorer-rook-{userId}` | Rook game |
+
+Legacy key `game-scorer-profiles` (no suffix) is migrated once to the per-user key on sign-in (`migrateLegacyProfilesForUser`).
 
 **Run locally** (required for JS modules):
 
@@ -52,22 +55,25 @@ If port 8080 is in use: `lsof -ti :8080 | xargs kill`, then restart.
 game-scorer/
 ├── index.html
 ├── css/base.css              # Shared shell UI (layout, buttons, forms)
-├── css/home.css              # Home + household players theme (data-theme="home")
+├── css/home.css              # Home hub + auth + Your players + Households theme
 ├── css/mobile.css            # Phone layout (~393px / iPhone 17 class), safe areas, touch targets
 ├── css/games/skull-king.css  # Skull King theme (loaded via catalog.js)
 ├── css/games/flip7.css
 ├── css/games/rook.css
-├── js/main.js                # Entry → auth, profile-sync, profiles, shell
+├── js/main.js                # Entry → auth, sync, auth-page, households-page, shell
 ├── js/supabase-config.js     # SUPABASE_URL, SUPABASE_ANON_KEY, APP_URL
 ├── js/core/
 │   ├── supabase-client.js    # createClient (CDN ESM)
 │   ├── auth.js               # Email + password sign up / sign in / sign out
-│   ├── auth-page.js          # Account UI + header bar
-│   ├── profile-sync.js       # player_profiles ↔ localStorage when signed in
-│   ├── shell.js              # Home, routing, confirm dialog, game-over ← All games
+│   ├── auth-page.js          # Sign-in gate UI + header (email, sign out)
+│   ├── user-storage.js       # scopedStorageKey() — per-user localStorage keys
+│   ├── profile-sync.js       # player_profiles ↔ scoped localStorage when signed in
+│   ├── households.js         # RPC: list/create/join/set/regenerate join codes
+│   ├── households-page.js    # Households card on home
+│   ├── shell.js              # Views, routing, auth gate, game-over ← All games
 │   ├── catalog.js            # GAMES list + createGameModules()
-│   ├── profiles.js           # Household players CRUD + favorites (localStorage + cloud hook)
-│   ├── profiles-page.js      # Home screen favorites list + other-players dropdown
+│   ├── profiles.js           # Your players CRUD + favorites (scoped local + cloud hook)
+│   ├── profiles-page.js      # Home favorites list + other-players dropdown
 │   ├── profile-chip.js       # Favorite chips + mountOtherProfilesDropdown()
 │   ├── profile-favorite.js   # Star toggle button
 │   ├── player-picker.js      # Game setup: favorites + dropdown + roster + guests
@@ -78,7 +84,7 @@ game-scorer/
 │   ├── skull-king/           # app.js, scoring.js, deck.js, index.js
 │   ├── flip7/                # app.js, scoring.js, index.js
 │   └── rook/                 # app.js, scoring.js, index.js
-├── supabase/migrations/      # SQL for player_profiles + RLS
+├── supabase/migrations/      # player_profiles, households, household RPCs, RLS, fixes
 ├── .gitignore
 ├── .github/workflows/deploy-pages.yml
 ├── README.md
@@ -97,9 +103,20 @@ Formerly labeled “Household players” in the UI — personal saved names on y
 
 ## Households (Phase 2 — partial)
 
-Home screen **Households** card: list via `get_my_households` (empty list is normal), **Join with code**, **Create a household**. **Owners** set/regenerate join code. RPC: `create_household`, `join_household_by_code`, `set_household_invite_code`, `regenerate_household_invite_code`, `get_my_households`.
+Home screen **Households** card (`households-view`):
 
-Saved under `game-scorer-profiles` as `{ version, profiles: [{ id, name, favorite }] }`.
+| Feature | Notes |
+|---------|--------|
+| **List** | RPC `get_my_households` — **empty list is normal**, not an error |
+| **Join** | Invite/join code form → `join_household_by_code` (6–12 letters/numbers) |
+| **Create** | Name form → `create_household` (creator becomes **owner**) |
+| **Owner controls** | Set custom join code (`set_household_invite_code`) or **Generate new code** (`regenerate_household_invite_code`) |
+| **Members** | See household name + join code (read-only) |
+| **Live scores** | UI stub — “coming soon” when user is in at least one household |
+
+**DB:** `households` (name, `invite_code`, `created_by`), `household_members` (`household_id`, `user_id`, `role` owner|member). Households are the **only intentional link** between auth accounts.
+
+Saved under `game-scorer-profiles-{userId}` as `{ version, profiles: [{ id, name, favorite }] }` (cloud mirror in `player_profiles`).
 
 ### UX
 
@@ -117,7 +134,10 @@ Saved under `game-scorer-profiles` as `{ version, profiles: [{ id, name, favorit
 
 | File | Role |
 |------|------|
-| `profiles.js` | `loadProfiles`, `loadProfilesSplit`, `addProfile`, `toggleProfileFavorite`, `subscribeProfiles` |
+| `profiles.js` | `setProfilesUserId`, `loadProfiles`, `loadProfilesSplit`, `addProfile`, `toggleProfileFavorite`, `subscribeProfiles` |
+| `profile-sync.js` | Cloud pull/push on sign-in; `setAfterPersistCallback` pushes edits |
+| `households.js` | `loadMyHouseholds`, `createHousehold`, `joinHouseholdByCode`, invite code RPCs |
+| `households-page.js` | Households list + join/create forms + owner join-code UI |
 | `profile-chip.js` | `renderFavoriteProfileChips`, `mountOtherProfilesDropdown` |
 | `player-picker.js` | Roster + guests; uses split UI above |
 
@@ -216,7 +236,7 @@ Setup and **Game Settings** (mid-game) share the same round-schedule UI logic vi
 4. **Base rulebook alignment** — 70-card base deck, zero-bid uses cards dealt, updated bonus labels/limits
 5. **Exit confirmation** — Custom modal for New Game / Play Again (not browser `confirm`)
 6. **In-match Game Settings** — Edit players, expansion, rounds, cards without starting over; recalculates stored scores; warns when removing players with data
-7. **Household player picker** — Favorites + dropdown + guests (see above)
+7. **Your players picker** — Favorites + dropdown + guests (see above)
 
 ### Flip 7
 
@@ -226,7 +246,7 @@ Setup and **Game Settings** (mid-game) share the same round-schedule UI logic vi
 4. **Total score floor** — `getTotalScore()` uses `Math.max(0, sum)` so standings never go negative (round cells can still show negative round totals)
 5. **Round history + edit** — View past rounds; **Edit this round** reopens the card picker
 6. **In-match Game Settings** — Players, winning score, Flip 7 bonus, bust penalty; recalculates stored rounds
-7. **Household player picker** — Same pattern as Skull King
+7. **Your players picker** — Same pattern as Skull King
 
 **Not built:** Rulebook card images on buttons (attempted PDF crop; `assets/` removed — UI uses text buttons only).
 
@@ -267,7 +287,9 @@ Setup and **Game Settings** (mid-game) share the same round-schedule UI logic vi
 
 ## Game state shape (localStorage)
 
-### Skull King (`skull-king-game`)
+Keys are scoped per auth user: `skull-king-game-{userId}`, `game-scorer-flip7-{userId}`, `game-scorer-rook-{userId}` (see `user-storage.js`).
+
+### Skull King
 
 ```javascript
 {
@@ -284,7 +306,7 @@ Each `RoundResult` includes: `round`, `cardsDealt`, `bid`, `tricks`, `bonuses`, 
 
 Normalized in `skull-king/app.js` → `normalizeSavedGame()`.
 
-### Flip 7 (`game-scorer-flip7`)
+### Flip 7
 
 ```javascript
 {
@@ -302,7 +324,7 @@ Each `Flip7RoundResult` includes: `round`, `busted`, `numberCards` (number[]), `
 
 Legacy saves (manual `numberSum`, `plusModifier`, `extraPlus`, manual `flip7` flag) are normalized in `scoring.js` → `normalizeRoundInput()`.
 
-### Rook (`game-scorer-rook`)
+### Rook
 
 ```javascript
 {
@@ -320,7 +342,7 @@ Legacy saves (manual `numberSum`, `plusModifier`, `extraPlus`, manual `flip7` fl
 
 Each `RookHandResult` includes: `hand`, `bid`, `biddingTeam` (0|1), `trickPoints` [n,n], `kittyTeam`, `kittyPoints`, `teamCardPoints`, `teamScores`, `madeBid`, `sweepTeam`.
 
-### Household profiles (`game-scorer-profiles`)
+### Your players (local shape, `game-scorer-profiles-{userId}`)
 
 ```javascript
 { version: 1, profiles: [{ id: string, name: string, favorite: boolean }, ...] }
@@ -332,7 +354,8 @@ Each `RookHandResult` includes: `hand`, `bid`, `biddingTeam` (0|1), `trickPoints
 
 | View | When |
 |------|------|
-| Home | `home-view` — game picker + **Household players** (favorites + other dropdown) |
+| Auth | `auth-view` — sign in / create account (**required** before home; guest mode removed) |
+| Home | `home-view` — game picker + **Your players** + **Households** |
 | Setup | `setup-view` + game-specific setup panel (`skull-king-setup`, `flip7-setup`, `rook-setup`) |
 | Active game | `game-view` + per-game panel |
 | Game over | `game-over-view` + per-game over panel; **← All games** toolbar (`game-over-back-to-home-btn`) |
@@ -341,7 +364,7 @@ Each `RookHandResult` includes: `hand`, `bid`, `biddingTeam` (0|1), `trickPoints
 | Exit confirm | `confirm-dialog` — New Game / Play Again (clears via `exitToHome()` when confirmed) |
 | Game settings | Per-game settings dialogs |
 
-**Resume on load** (`shell.js` → `initFromSavedGame()`): skull-king → flip7 → rook (first match wins).
+**Resume on load** (`shell.js` → `initFromSavedGame()`): skull-king → flip7 → rook (first match wins). Only when **signed in**; otherwise `startApp` shows `auth-view`.
 
 **Themes:** `document.body.dataset.theme` = `home` (home + profiles), `skull-king` | `flip7` | `rook` in setup/game/over. Home uses `css/home.css`; Skull King uses `css/games/skull-king.css` (see `catalog.js` → `stylesheet`). `shell.js` sets `theme = "home"` on home and player-profile views.
 
@@ -382,7 +405,8 @@ Chats are tied to the **workspace folder open in Cursor**, not the project files
 
 ### Cross-app
 
-- **Households Phase 2b** — invite members by account, sync **live game scores** to household view. Create/join by invite code is **done**.
+- **Households Phase 2b** — sync **live game scores** to household view (create/join + owner join codes **done**).
+- **Deploy cache-busting** — optional `?v=` on script tags so phones pick up new JS without manual cache clear.
 - **Player profile game history** — wire `player-profile-page.js` to past games / stats
 - Export score sheet (PDF) for any game
 
@@ -455,6 +479,19 @@ When it passes (green check), return to **Settings → Pages** and copy the publ
 
 **Easier fallback (no Actions):** **Settings → Pages** → Source **Deploy from a branch** → Branch `main` → folder `/ (root)` → Save. Site can work without the workflow; you can ignore or delete `.github/workflows/deploy-pages.yml` later if you prefer.
 
+### Clearing live-site cache
+
+After deploy, phones/browsers may show an old UI (no service worker in this repo).
+
+| Where | What to do |
+|-------|------------|
+| **Desktop** | Hard refresh: `Cmd + Shift + R`, or DevTools → Application → Clear site data |
+| **iPhone Safari** | Close tab; or **Settings → Apps → Safari → Advanced → Website Data** → delete `tpuls16.github.io` |
+| **Add to Home Screen** | Remove old icon and add again after a big deploy |
+| **Quick test** | Private/incognito window — if correct there, normal profile is cached |
+
+Optional future improvement: cache-busting query param on `main.js` in `index.html` on each deploy.
+
 ### Data on the live site
 
 GitHub hosts the **app files**. Each **auth account** has its own cloud rows (`player_profiles.user_id`) and its own **localStorage keys** on a device (`…-{userId}`). **Households** are the only intentional link between accounts (`household_members`). In-progress games stay on the device per account until household live sync exists.
@@ -470,7 +507,7 @@ GitHub hosts the **app files**. Each **auth account** has its own cloud rows (`p
 
 **Current DB snapshot (example):** `tysonp@pulsifire.com` → 8 personal players, no household. `tysonpulsipher1@gmail.com` → 4 personal players + owns “Pulsipher Family” household.
 
-### Supabase project (Phase 1)
+### Supabase project (`game-scorer-db`)
 
 | Item | Value |
 |------|--------|
@@ -478,15 +515,19 @@ GitHub hosts the **app files**. Each **auth account** has its own cloud rows (`p
 | **Project ref** | `grmiptwfwsjhpooaluft` |
 | **Region** | us-west-2 |
 | **API URL** | `https://grmiptwfwsjhpooaluft.supabase.co` |
-| **Table** | `public.player_profiles` (RLS: `user_id = auth.uid()`) |
-| **Auth** | Email + password (`signUp` / `signInWithPassword`) |
+| **Tables** | `player_profiles`, `households`, `household_members` (all RLS) |
+| **Auth** | Email + password (`signUp` / `signInWithPassword`); **login required** in app |
+| **RPCs** | `get_my_households`, `create_household`, `join_household_by_code`, `set_household_invite_code`, `regenerate_household_invite_code` |
 
 **Test account** (local + live sign-in):
 
 | Field | Value |
 |-------|--------|
+| **Family username** | `PulsFam` |
 | **Email** | `tysonp@pulsifire.com` |
 | **Password** | `Tester1` |
+
+Sign in with **either** the family username or the email, plus the password.
 
 **Dashboard settings to verify:**
 
@@ -496,7 +537,9 @@ GitHub hosts the **app files**. Each **auth account** has its own cloud rows (`p
 
 ### History note
 
-An earlier Supabase attempt (households, magic-link, full sync UI) was reverted in June 2026. Phase 1 was rebuilt on a **new** project (`game-scorer-db`) with a smaller scope.
+An earlier Supabase attempt (households, magic-link, full sync UI) was reverted in June 2026. Rebuilt on **new** project `game-scorer-db`: Phase 1 (auth + `player_profiles`), then households (create/join, owner join codes, `get_my_households`, RPC ambiguity fixes).
+
+**Migrations (repo):** `20260609190000_create_player_profiles.sql`, `20260609200000_create_households.sql`, `20260609210000_household_owner_invite_code.sql`, `20260609220000_revoke_anon_api_access.sql`, `20260609230000_fix_household_rpc_and_list.sql`.
 
 ### Version control (daily)
 
@@ -515,21 +558,36 @@ git push
 
 | Function | Purpose |
 |----------|---------|
-| `showView(view, gameId)` | home / setup / game / over / player-profile |
-| `showHomeView()` | Game picker; does **not** clear game storage |
+| `showView(view, gameId)` | auth / home / setup / game / over / player-profile (redirects to auth if not signed in) |
+| `showAuthView()` / `showHomeView()` | Auth gate vs game picker home |
 | `showExitGameConfirm(fn)` | Confirm then run fn (often `exitToHome`) |
 | `exitToHome()` | `clearGame()` on **all** modules, then home |
-| `initFromSavedGame()` | Resume first saved game among SK / Flip7 / Rook |
+| `startApp()` | Wire events; `initFromSavedGame()` if signed in, else auth |
+| `initFromSavedGame()` | Resume first saved game among SK / Flip7 / Rook (scoped local keys) |
 
-### Household (`js/core/`)
+### Your players (`js/core/`)
 
 | Function | Purpose |
 |----------|---------|
+| `setProfilesUserId` / `scopedStorageKey` | Per-account localStorage namespace |
 | `loadProfilesSplit()` | `{ favorites, others }` |
 | `renderFavoriteProfileChips()` | Setup/game chips for favorites only |
 | `mountOtherProfilesDropdown()` | Shared `<select>` for non-favorites |
 | `createPlayerPicker()` | Full setup roster UX |
-| `sumHandCounters` / `handScoringIsReady` | Rook 180-point validation (`rook/scoring.js`) |
+
+### Households (`js/core/`)
+
+| Function | Purpose |
+|----------|---------|
+| `loadMyHouseholds()` | RPC `get_my_households` |
+| `createHousehold` / `joinHouseholdByCode` | Create or join by code |
+| `setHouseholdInviteCode` / `regenerateHouseholdInviteCode` | Owner join-code controls |
+
+### Rook helpers (`js/games/rook/scoring.js`)
+
+| Function | Purpose |
+|----------|---------|
+| `sumHandCounters` / `handScoringIsReady` | Rook 180-point validation |
 
 ### Skull King (`js/games/skull-king/app.js`)
 
@@ -581,4 +639,4 @@ Register games in `catalog.js` → `createGameModules(shell)`.
 
 ---
 
-*Last updated: June 2026 (Supabase Phase 1: auth + player_profiles sync)*
+*Last updated: June 2026 (auth gate, per-user storage, households + join codes, Supabase RPC fixes, live-site cache notes)*

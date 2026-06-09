@@ -1,6 +1,6 @@
 import { initAuth } from "./core/auth.js";
+import "./core/account-username.js";
 import { initAuthPage } from "./core/auth-page.js";
-import { initHouseholdsPage } from "./core/households-page.js";
 import { initProfileSync } from "./core/profile-sync.js";
 import "./core/player-profile-page.js";
 import "./core/profiles-page.js";
@@ -10,8 +10,7 @@ async function boot() {
   await initAuth();
   initProfileSync();
   initAuthPage();
-  initHouseholdsPage();
-  startApp();
+  await startApp();
 }
 
 boot().catch((error) => {

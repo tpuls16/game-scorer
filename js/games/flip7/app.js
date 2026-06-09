@@ -17,6 +17,12 @@ import {
   PLUS_MODIFIER_CARD_VALUES,
   FLIP7_REQUIRED_NUMBER_CARDS,
 } from "./scoring.js";
+import { tryRecordGameHistory } from "../../core/game-history.js";
+import {
+  mapFlip7Players,
+  mapFlip7PlayersFromSettings,
+  rosterRefsFromGamePlayers,
+} from "../../core/game-players.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
 import { scopedStorageKey } from "../../core/user-storage.js";
 
@@ -101,10 +107,10 @@ function clearGame() {
   editingRound = false;
 }
 
-function createEmptyGame(playerNames, options = {}) {
+function createEmptyGame(playerRefs, options = {}) {
   return {
     gameId: "flip7",
-    players: playerNames.map((name) => ({ name, rounds: [] })),
+    players: mapFlip7Players(playerRefs),
     currentRound: 1,
     completed: false,
     targetScore: options.targetScore ?? DEFAULT_TARGET_SCORE,
@@ -662,13 +668,14 @@ function renderGameOver() {
   renderRoundPreview(gameOverRoundPreview);
   renderScoreboard(gameOverScoreboard);
   updateRoundPanels();
+  if (tryRecordGameHistory(game)) saveGame();
   showView("over");
 }
 
-function startGame(playerNames, options) {
+function startGame(playerRefs, options) {
   viewingRound = null;
   editingRound = false;
-  game = createEmptyGame(playerNames, options);
+  game = createEmptyGame(playerRefs, options);
   saveGame();
   showView("game");
   renderGameView();
@@ -714,7 +721,7 @@ function openGameSettings() {
   settingsTargetInput.value = game.targetScore;
   settingsBonusInput.value = game.flip7Bonus;
   settingsBustInput.value = bustPenaltyFromPoints(game.bustPoints);
-  settingsPlayerPicker.setPlayerNames(game.players.map((player) => player.name));
+  settingsPlayerPicker.setRosterFromPlayers(rosterRefsFromGamePlayers(game.players));
   settingsDialog.classList.remove("hidden");
   document.getElementById("flip7-settings-save").focus();
 }
@@ -724,6 +731,7 @@ function closeGameSettings() {
 }
 
 function saveGameSettings() {
+  const playerRefs = settingsPlayerPicker.getPlayersForGame();
   const playerNames = settingsPlayerPicker.getPlayerNames();
   const targetScore = Math.max(50, Math.min(500, Number(settingsTargetInput.value)));
   const flip7Bonus = Math.max(0, Math.min(50, Number(settingsBonusInput.value)));
@@ -744,10 +752,7 @@ function saveGameSettings() {
     if (!confirm(`Removing ${names} will delete their scores. Continue?`)) return;
   }
 
-  game.players = playerNames.map((name, index) => ({
-    name,
-    rounds: game.players[index]?.rounds ?? [],
-  }));
+  game.players = mapFlip7PlayersFromSettings(playerRefs, game.players);
   game.targetScore = targetScore;
   game.flip7Bonus = flip7Bonus;
   game.bustPoints = bustPoints;
@@ -779,6 +784,7 @@ function loadSavedGame() {
 
 function bindEvents({ showExitGameConfirm }) {
   document.getElementById("flip7-start-game-btn").addEventListener("click", () => {
+    const playerRefs = setupPlayerPicker.getPlayersForGame();
     const names = setupPlayerPicker.getPlayerNames();
     const targetScore = Math.max(50, Math.min(500, Number(targetScoreInput.value)));
     const flip7Bonus = Math.max(0, Math.min(50, Number(bonusPointsInput.value)));
@@ -797,7 +803,7 @@ function bindEvents({ showExitGameConfirm }) {
       return;
     }
 
-    startGame(names, { targetScore, flip7Bonus, bustPoints });
+    startGame(playerRefs, { targetScore, flip7Bonus, bustPoints });
   });
 
   document.getElementById("flip7-game-settings-btn").addEventListener("click", openGameSettings);

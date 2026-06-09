@@ -17,6 +17,12 @@ import {
   applyDeckCap,
 } from "./deck.js";
 import { createNumberField } from "../../core/ui-utils.js";
+import { tryRecordGameHistory } from "../../core/game-history.js";
+import {
+  mapSkullKingPlayers,
+  mapSkullKingPlayersFromSettings,
+  rosterRefsFromGamePlayers,
+} from "../../core/game-players.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
 import { scopedStorageKey } from "../../core/user-storage.js";
 
@@ -206,23 +212,20 @@ function readSetupCardsPerRound() {
   return readCardsPerRoundFromSchedule(setupScheduleEls);
 }
 
-function createEmptyGame(playerNames, options = {}) {
+function createEmptyGame(playerRefs, options = {}) {
   const {
     useExpansion = false,
     totalRounds = DEFAULT_TOTAL_ROUNDS,
     cardsPerRound = buildDefaultCardsPerRound({
       totalRounds,
-      numPlayers: playerNames.length,
+      numPlayers: playerRefs.length,
       useExpansion,
     }),
   } = options;
 
   return {
     gameId: "skull-king",
-    players: playerNames.map((name) => ({
-      name,
-      rounds: [],
-    })),
+    players: mapSkullKingPlayers(playerRefs),
     currentRound: 1,
     completed: false,
     useExpansion,
@@ -299,6 +302,10 @@ function getSetupPlayerNames() {
   return setupPlayerPicker.getPlayerNames();
 }
 
+function getSetupPlayerRefs() {
+  return setupPlayerPicker.getPlayersForGame();
+}
+
 function getMaxScoredRound() {
   let maxRound = 0;
   for (const player of game.players) {
@@ -341,7 +348,7 @@ function inferSchedulePattern(cardsPerRound) {
 }
 
 function renderSettingsPlayerInputs() {
-  settingsPlayerPicker.setPlayerNames(game.players.map((player) => player.name));
+  settingsPlayerPicker.setRosterFromPlayers(rosterRefsFromGamePlayers(game.players));
 }
 
 function populateGameSettingsForm() {
@@ -374,6 +381,10 @@ function closeGameSettings() {
 
 function getSettingsPlayerNames() {
   return settingsPlayerPicker.getPlayerNames();
+}
+
+function getSettingsPlayerRefs() {
+  return settingsPlayerPicker.getPlayersForGame();
 }
 
 function validateGameSettings(playerNames, useExpansion, totalRounds, cardsPerRound) {
@@ -409,8 +420,8 @@ function validateGameSettings(playerNames, useExpansion, totalRounds, cardsPerRo
   return true;
 }
 
-function applyGameSettings(playerNames, useExpansion, totalRounds, cardsPerRound) {
-  const removedPlayers = game.players.slice(playerNames.length).filter((player) => player.rounds.length > 0);
+function applyGameSettings(playerRefs, useExpansion, totalRounds, cardsPerRound) {
+  const removedPlayers = game.players.slice(playerRefs.length).filter((player) => player.rounds.length > 0);
   if (removedPlayers.length > 0) {
     const names = removedPlayers.map((player) => player.name).join(", ");
     if (!confirm(`Removing ${names} will delete their scores. Continue?`)) {
@@ -418,13 +429,7 @@ function applyGameSettings(playerNames, useExpansion, totalRounds, cardsPerRound
     }
   }
 
-  game.players = playerNames.map((name, index) => {
-    const existing = game.players[index];
-    return {
-      name,
-      rounds: existing ? existing.rounds : [],
-    };
-  });
+  game.players = mapSkullKingPlayersFromSettings(playerRefs, game.players);
 
   game.useExpansion = useExpansion;
   game.totalRounds = totalRounds;
@@ -466,6 +471,7 @@ function applyGameSettings(playerNames, useExpansion, totalRounds, cardsPerRound
 }
 
 function saveGameSettings() {
+  const playerRefs = getSettingsPlayerRefs();
   const playerNames = getSettingsPlayerNames();
   const useExpansion = settingsScheduleEls.useExpansionCheckbox.checked;
   const totalRounds = Math.max(1, Math.min(20, Number(settingsScheduleEls.totalRoundsInput.value)));
@@ -479,7 +485,7 @@ function saveGameSettings() {
     return;
   }
 
-  applyGameSettings(playerNames, useExpansion, totalRounds, cardsPerRound);
+  applyGameSettings(playerRefs, useExpansion, totalRounds, cardsPerRound);
 }
 
 function getPlayerTotals() {
@@ -802,12 +808,13 @@ function renderGameOver() {
   renderRoundPreview(gameOverRoundPreview);
   renderScoreboard(gameOverScoreboard);
   updateRoundPanels();
+  if (tryRecordGameHistory(game)) saveGame();
   showView("over");
 }
 
-function startGame(playerNames, options = {}) {
+function startGame(playerRefs, options = {}) {
   viewingRound = null;
-  game = createEmptyGame(playerNames, options);
+  game = createEmptyGame(playerRefs, options);
   saveGame();
   showView("game");
   renderGameView();
@@ -877,6 +884,7 @@ function loadSavedGame() {
 
 function bindEvents({ showExitGameConfirm }) {
 document.getElementById("sk-start-game-btn").addEventListener("click", () => {
+  const playerRefs = getSetupPlayerRefs();
   const names = getSetupPlayerNames();
   const useExpansion = useExpansionCheckbox.checked;
   const totalRounds = Math.max(1, Math.min(20, Number(totalRoundsInput.value)));
@@ -913,7 +921,7 @@ document.getElementById("sk-start-game-btn").addEventListener("click", () => {
     return;
   }
 
-  startGame(names, { useExpansion, totalRounds, cardsPerRound });
+  startGame(playerRefs, { useExpansion, totalRounds, cardsPerRound });
 });
 
 [totalRoundsInput, startingCardsInput, cardIncrementInput, useExpansionCheckbox].forEach(
