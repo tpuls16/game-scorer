@@ -5,9 +5,20 @@ Use this doc to continue work in a new chat without losing context.
 
 ---
 
+## Current status (June 2026)
+
+| Area | State |
+|------|--------|
+| **App** | Vanilla HTML/CSS/JS on `main`; all game data in **localStorage** per browser |
+| **Live site** | **https://tpuls16.github.io/game-scorer/** via GitHub Pages (push to `main` deploys automatically) |
+| **Supabase** | Auth required; **Your players** → `player_profiles`. **Households** → create/join by invite code (`households`, `household_members`). Live scores **stub only**. Games still **localStorage** |
+| **Themes** | Separate **home** hub theme (`css/home.css`) and **Skull King** theme (`css/games/skull-king.css`); Flip 7 / Rook keep their game CSS |
+
+---
+
 ## What this app is
 
-A **vanilla HTML/CSS/JS** multi-game scorekeeper. No build step, no backend.
+A **vanilla HTML/CSS/JS** multi-game scorekeeper. No build step, no backend today.
 
 **Games:** **Skull King**, **Flip 7**, **Rook** (Tolman Rules).
 
@@ -18,7 +29,8 @@ Progress saves in **localStorage**:
 | `skull-king-game` | Skull King in-progress / completed game |
 | `game-scorer-flip7` | Flip 7 game |
 | `game-scorer-rook` | Rook game |
-| `game-scorer-profiles` | Household player profiles (shared across games) |
+| `game-scorer-profiles-{userId}` | Your players — local cache **per auth account** on this device |
+| `skull-king-game-{userId}` etc. | In-progress games — local cache **per auth account** |
 
 **Run locally** (required for JS modules):
 
@@ -30,7 +42,7 @@ python3 -m http.server 8080
 Open [http://localhost:8080](http://localhost:8080).  
 If port 8080 is in use: `lsof -ti :8080 | xargs kill`, then restart.
 
-**Run on phones (no Mac server):** use GitHub Pages — **https://tpuls16.github.io/game-scorer/** after deploy is fixed (see [Git & GitHub Pages](#git--github-pages) below).
+**Run on phones (no Mac server):** use GitHub Pages — **https://tpuls16.github.io/game-scorer/** (see [Git & GitHub Pages](#git--github-pages) below).
 
 ---
 
@@ -39,15 +51,22 @@ If port 8080 is in use: `lsof -ti :8080 | xargs kill`, then restart.
 ```
 game-scorer/
 ├── index.html
-├── css/base.css              # Shell + Skull King (default) theme + shared UI
+├── css/base.css              # Shared shell UI (layout, buttons, forms)
+├── css/home.css              # Home + household players theme (data-theme="home")
 ├── css/mobile.css            # Phone layout (~393px / iPhone 17 class), safe areas, touch targets
+├── css/games/skull-king.css  # Skull King theme (loaded via catalog.js)
 ├── css/games/flip7.css
 ├── css/games/rook.css
-├── js/main.js                # Entry → profiles, player-profile, profiles-page, shell
+├── js/main.js                # Entry → auth, profile-sync, profiles, shell
+├── js/supabase-config.js     # SUPABASE_URL, SUPABASE_ANON_KEY, APP_URL
 ├── js/core/
+│   ├── supabase-client.js    # createClient (CDN ESM)
+│   ├── auth.js               # Email + password sign up / sign in / sign out
+│   ├── auth-page.js          # Account UI + header bar
+│   ├── profile-sync.js       # player_profiles ↔ localStorage when signed in
 │   ├── shell.js              # Home, routing, confirm dialog, game-over ← All games
 │   ├── catalog.js            # GAMES list + createGameModules()
-│   ├── profiles.js           # Household players CRUD + favorites (localStorage)
+│   ├── profiles.js           # Household players CRUD + favorites (localStorage + cloud hook)
 │   ├── profiles-page.js      # Home screen favorites list + other-players dropdown
 │   ├── profile-chip.js       # Favorite chips + mountOtherProfilesDropdown()
 │   ├── profile-favorite.js   # Star toggle button
@@ -59,6 +78,7 @@ game-scorer/
 │   ├── skull-king/           # app.js, scoring.js, deck.js, index.js
 │   ├── flip7/                # app.js, scoring.js, index.js
 │   └── rook/                 # app.js, scoring.js, index.js
+├── supabase/migrations/      # SQL for player_profiles + RLS
 ├── .gitignore
 ├── .github/workflows/deploy-pages.yml
 ├── README.md
@@ -71,7 +91,13 @@ game-scorer/
 
 ---
 
-## Household players (cross-cutting)
+## Your players (cross-cutting)
+
+Formerly labeled “Household players” in the UI — personal saved names on your account, not shared household roster.
+
+## Households (Phase 2 — partial)
+
+Home screen **Households** card: list via `get_my_households` (empty list is normal), **Join with code**, **Create a household**. **Owners** set/regenerate join code. RPC: `create_household`, `join_household_by_code`, `set_household_invite_code`, `regenerate_household_invite_code`, `get_my_households`.
 
 Saved under `game-scorer-profiles` as `{ version, profiles: [{ id, name, favorite }] }`.
 
@@ -79,7 +105,7 @@ Saved under `game-scorer-profiles` as `{ version, profiles: [{ id, name, favorit
 
 | Surface | Favorites | Non-favorites |
 |---------|-----------|---------------|
-| **Home** (`profiles-view`) | Full list rows (star, rename, delete, profile) | **Other household players** `<select>` → manage one player below |
+| **Home** (`profiles-view`) | Full list rows (star, rename, delete, profile) | **Other saved players** `<select>` → manage one player below |
 | **Game setup** (`createPlayerPicker`) | Tappable chips (★ name) + Profile button | Same dropdown → add to “Playing this game” roster |
 
 - Star toggle **only on home** (removed from game setup chips).
@@ -317,7 +343,7 @@ Each `RookHandResult` includes: `hand`, `bid`, `biddingTeam` (0|1), `trickPoints
 
 **Resume on load** (`shell.js` → `initFromSavedGame()`): skull-king → flip7 → rook (first match wins).
 
-**Themes:** `document.body.dataset.theme` = `skull-king` | `flip7` | `rook` | `""` on home.
+**Themes:** `document.body.dataset.theme` = `home` (home + profiles), `skull-king` | `flip7` | `rook` in setup/game/over. Home uses `css/home.css`; Skull King uses `css/games/skull-king.css` (see `catalog.js` → `stylesheet`). `shell.js` sets `theme = "home"` on home and player-profile views.
 
 ---
 
@@ -356,6 +382,7 @@ Chats are tied to the **workspace folder open in Cursor**, not the project files
 
 ### Cross-app
 
+- **Households Phase 2b** — invite members by account, sync **live game scores** to household view. Create/join by invite code is **done**.
 - **Player profile game history** — wire `player-profile-page.js` to past games / stats
 - Export score sheet (PDF) for any game
 
@@ -393,9 +420,22 @@ Chats are tied to the **workspace folder open in Cursor**, not the project files
 | **Branch** | `main` |
 | **Deploy guide** | [DEPLOY-GITHUB-PAGES.md](./DEPLOY-GITHUB-PAGES.md) |
 | **Workflow file** | `.github/workflows/deploy-pages.yml` (workflow name: **Deploy to GitHub Pages**) |
-| **Live URL (when working)** | **https://tpuls16.github.io/game-scorer/** |
+| **Live URL** | **https://tpuls16.github.io/game-scorer/** |
 
-Push to `main` → Actions runs → site updates (~1–2 min). No build step.
+### Auto-deploy workflow (where it lives)
+
+File: **`.github/workflows/deploy-pages.yml`**
+
+| Trigger | When |
+|---------|------|
+| `push` to `main` | Every `git push` updates the live site (~1–2 min) |
+| `workflow_dispatch` | Manual run from GitHub → **Actions** → **Deploy to GitHub Pages** → **Run workflow** |
+
+**Steps:** checkout repo → upload entire project root as static artifact → `actions/deploy-pages` publishes to GitHub Pages. **No build step** (plain HTML/CSS/JS).
+
+**One-time repo setting:** **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+**After deploy on phone:** Safari may cache the old site; close the tab, hard refresh, or use a private window once if the UI looks stale.
 
 ### If Actions shows a failed run titled “Initial creation of Game Scorer”
 
@@ -417,7 +457,46 @@ When it passes (green check), return to **Settings → Pages** and copy the publ
 
 ### Data on the live site
 
-GitHub hosts the **app files** only. Game scores and household players remain **per phone/browser** (localStorage), not synced through Git.
+GitHub hosts the **app files**. Each **auth account** has its own cloud rows (`player_profiles.user_id`) and its own **localStorage keys** on a device (`…-{userId}`). **Households** are the only intentional link between accounts (`household_members`). In-progress games stay on the device per account until household live sync exists.
+
+### Data isolation (important)
+
+| Layer | Rule |
+|-------|------|
+| **Supabase Table Editor** | Shows **all rows** (admin/service view). RLS still applies in the **app** — this is not cross-account leakage. Filter by `user_id` or `email` when inspecting. |
+| **`player_profiles`** | RLS: `auth.uid() = user_id` — each login only reads/writes its own saved players. |
+| **`households` / `household_members`** | Only visible to members of that household. Joining is explicit (invite code). |
+| **Browser `localStorage`** | Keys include the signed-in user id so two accounts on the same phone do not share cached players or games. |
+
+**Current DB snapshot (example):** `tysonp@pulsifire.com` → 8 personal players, no household. `tysonpulsipher1@gmail.com` → 4 personal players + owns “Pulsipher Family” household.
+
+### Supabase project (Phase 1)
+
+| Item | Value |
+|------|--------|
+| **Dashboard name** | `game-scorer-db` |
+| **Project ref** | `grmiptwfwsjhpooaluft` |
+| **Region** | us-west-2 |
+| **API URL** | `https://grmiptwfwsjhpooaluft.supabase.co` |
+| **Table** | `public.player_profiles` (RLS: `user_id = auth.uid()`) |
+| **Auth** | Email + password (`signUp` / `signInWithPassword`) |
+
+**Test account** (local + live sign-in):
+
+| Field | Value |
+|-------|--------|
+| **Email** | `tysonp@pulsifire.com` |
+| **Password** | `Tester1` |
+
+**Dashboard settings to verify:**
+
+1. **Authentication → URL configuration** — Site URL `https://tpuls16.github.io/game-scorer/`; redirect URLs include `https://tpuls16.github.io/game-scorer/**` and `http://localhost:8080/**`.
+2. **Authentication → Providers → Email** — enabled.
+3. For frictionless family signup, consider **disable “Confirm email”** (otherwise new accounts must confirm before sign-in works).
+
+### History note
+
+An earlier Supabase attempt (households, magic-link, full sync UI) was reverted in June 2026. Phase 1 was rebuilt on a **new** project (`game-scorer-db`) with a smaller scope.
 
 ### Version control (daily)
 
@@ -497,7 +576,9 @@ Register games in `catalog.js` → `createGameModules(shell)`.
 - Prefers step-by-step explanations when walking through code
 - Project folder: `~/projects/apps/game-scorer` (renamed from `skull-king-scorer`)
 - Family Rook uses **Tolman Rules** (Kentucky-style per rookgame.com)
+- GitHub auth on Mac: HTTPS + Keychain (`credential.helper = osxkeychain`); no `gh` CLI required
+- Test sign-in on the **live GitHub Pages URL**, not only `localhost`
 
 ---
 
-*Last updated: June 2026*
+*Last updated: June 2026 (Supabase Phase 1: auth + player_profiles sync)*

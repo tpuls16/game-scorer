@@ -18,8 +18,13 @@ import {
   FLIP7_REQUIRED_NUMBER_CARDS,
 } from "./scoring.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
+import { scopedStorageKey } from "../../core/user-storage.js";
 
-const STORAGE_KEY = "game-scorer-flip7";
+const STORAGE_KEY_BASE = "game-scorer-flip7";
+
+function gameStorageKey() {
+  return scopedStorageKey(STORAGE_KEY_BASE);
+}
 
 /** @type {{ showView: (view: string, gameId: string) => void, showExitGameConfirm: (fn: () => void) => void, exitToHome: () => void } | null} */
 let shellRef = null;
@@ -76,11 +81,11 @@ let viewingRound = null;
 let editingRound = false;
 
 function saveGame() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
+  localStorage.setItem(gameStorageKey(), JSON.stringify(game));
 }
 
 function loadGame() {
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const saved = localStorage.getItem(gameStorageKey());
   if (!saved) return null;
   try {
     return JSON.parse(saved);
@@ -90,7 +95,7 @@ function loadGame() {
 }
 
 function clearGame() {
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(gameStorageKey());
   game = null;
   viewingRound = null;
   editingRound = false;
@@ -831,11 +836,11 @@ export function createFlip7App(shell) {
 
   return {
     id: "flip7",
-    storageKey: STORAGE_KEY,
+    storageKey: STORAGE_KEY_BASE,
     loadSavedGame,
     initSetupView,
     clearGame,
-    hasSavedGame: () => Boolean(localStorage.getItem(STORAGE_KEY)),
+    hasSavedGame: () => Boolean(localStorage.getItem(gameStorageKey())),
     handleSettingsEscape: closeGameSettings,
     isSettingsOpen: () => !settingsDialog.classList.contains("hidden"),
   };

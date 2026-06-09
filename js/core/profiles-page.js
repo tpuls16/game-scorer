@@ -1,3 +1,4 @@
+import { subscribeAuth } from "./auth.js";
 import {
   loadProfiles,
   loadProfilesSplit,
@@ -262,6 +263,13 @@ export function initProfilesPage() {
     }
     renderProfilesList();
   });
+
+  subscribeAuth((user) => {
+    if (user) {
+      renderProfilesList();
+    }
+  });
+
   renderProfilesList();
 }
 

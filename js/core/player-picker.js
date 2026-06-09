@@ -37,24 +37,24 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
   const householdSection = document.createElement("div");
   householdSection.className = "player-picker-household setup-subsection";
   const householdHeading = document.createElement("h4");
-  householdHeading.textContent = "Household players";
+  householdHeading.textContent = "Your players";
   const householdHint = document.createElement("p");
   householdHint.className = "hint";
   householdHint.textContent =
-    "Tap a favorite to add them, or choose another household player from the menu.";
+    "Tap a favorite to add them, or choose another saved player from the menu.";
   const chipsEl = document.createElement("div");
   chipsEl.className = "profile-chips";
   chipsEl.setAttribute("role", "group");
-  chipsEl.setAttribute("aria-label", "Favorite household players");
+  chipsEl.setAttribute("aria-label", "Favorite saved players");
   const otherDropdownHost = document.createElement("div");
   otherDropdownHost.className = "profiles-other-dropdown-host";
   const chipsEmpty = document.createElement("p");
   chipsEmpty.className = "hint profile-chips-empty";
   chipsEmpty.textContent =
-    "No household players saved yet. Add names on the home screen under Household players.";
+    "No saved players yet. Add names on the home screen under Your players.";
 
   const otherProfilesDropdown = mountOtherProfilesDropdown({
-    placeholder: "Add another household player…",
+    placeholder: "Add another saved player…",
     onPick: (profile) => toggleProfile(profile),
     isOptionDisabled: (profile) =>
       roster.length >= maxPlayers ||
@@ -114,11 +114,11 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
     chipsEmpty.classList.toggle("hidden", total > 0);
     chipsEl.classList.toggle("hidden", favoriteCount === 0);
     if (total > 0 && favoriteCount === 0) {
-      chipsEmpty.textContent = "No favorites yet — use the menu below to add other household players.";
+      chipsEmpty.textContent = "No favorites yet — use the menu below to add other saved players.";
       chipsEmpty.classList.remove("hidden");
     } else if (total === 0) {
       chipsEmpty.textContent =
-        "No household players saved yet. Add names on the home screen under Household players.";
+        "No saved players yet. Add names on the home screen under Your players.";
     }
   }
 
@@ -183,7 +183,7 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
         name.textContent = entry.name;
         const badge = document.createElement("span");
         badge.className = "roster-player-badge";
-        badge.textContent = "Household";
+        badge.textContent = "Saved";
         const profile = loadProfiles().find((p) => p.id === entry.profileId);
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
@@ -211,7 +211,7 @@ export function createPlayerPicker(hostEl, { maxPlayers = 10, onChange, profileB
     if (roster.length === 0) {
       const empty = document.createElement("p");
       empty.className = "hint roster-empty";
-      empty.textContent = "No players selected — tap household names above or add a guest.";
+      empty.textContent = "No players selected — tap saved player names above or add a guest.";
       rosterEl.append(empty);
     }
   }

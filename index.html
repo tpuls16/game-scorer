@@ -21,7 +21,60 @@
       <header>
         <h1 id="app-title">Game Scorer</h1>
         <p id="app-subtitle">Choose a game to start scoring</p>
+        <div id="account-bar" class="account-bar hidden">
+          <div id="account-signed-in" class="account-signed-in">
+            <span id="account-email" class="account-email"></span>
+            <button type="button" id="account-sign-out-btn" class="btn btn-secondary btn-account">
+              Sign out
+            </button>
+          </div>
+        </div>
       </header>
+
+      <section id="auth-view" class="card hidden">
+        <h2>Sign in to play</h2>
+        <p class="hint">
+          Sign in or create an account to pick a game and save your players. Game scores still save on this device for now.
+        </p>
+
+        <div class="auth-mode-toggle" role="tablist" aria-label="Sign in or create account">
+          <button type="button" id="auth-mode-sign-in" class="auth-mode-btn is-active" role="tab">
+            Sign in
+          </button>
+          <button type="button" id="auth-mode-sign-up" class="auth-mode-btn" role="tab">
+            Create account
+          </button>
+        </div>
+
+        <form id="auth-form" class="auth-form">
+          <label for="auth-email">Email</label>
+          <input
+            type="email"
+            id="auth-email"
+            name="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+          />
+
+          <label for="auth-password">Password</label>
+          <input
+            type="password"
+            id="auth-password"
+            name="password"
+            autocomplete="current-password"
+            minlength="6"
+            placeholder="At least 6 characters"
+            required
+          />
+
+          <p id="auth-status" class="auth-status hidden" aria-live="polite"></p>
+
+          <button type="submit" id="auth-submit-btn" class="btn btn-primary auth-submit-btn">
+            Sign in
+          </button>
+        </form>
+      </section>
 
       <section id="home-view" class="card">
         <h2>Which game are you playing?</h2>
@@ -30,16 +83,19 @@
       </section>
 
       <section id="profiles-view" class="card">
-        <h2>Household players</h2>
+        <h2>Your players</h2>
         <p class="hint">
-          Save names you play with often (e.g. Mom, Dad, Tyson). Star favorites to show them here and in game setup; everyone else stays in the menu below.
+          Names on your account for game setup (e.g. Mom, Dad, Tyson). Star favorites to show them here and when you start a game; everyone else stays in the menu below.
+        </p>
+        <p id="profiles-sync-hint" class="hint profiles-sync-hint">
+          Changes sync to your account.
         </p>
 
         <div class="profiles-saved-block">
           <h3 class="profiles-saved-heading">Favorites</h3>
           <p id="profiles-empty-hint" class="hint profiles-empty-hint">No saved players yet — add a name below.</p>
           <p id="profiles-favorites-empty-hint" class="hint profiles-favorites-empty hidden">
-            No favorites yet. Star a player after you open them from Other household players, or add a new name below.
+            No favorites yet. Star a player after you open them from Other saved players, or add a new name below.
           </p>
           <div id="profiles-favorites-list" class="profiles-list" aria-live="polite"></div>
           <div id="profiles-other-dropdown-host"></div>
@@ -62,6 +118,66 @@
             <button type="submit" id="add-profile-save-btn" class="btn btn-primary">Save</button>
           </div>
         </form>
+      </section>
+
+      <section id="households-view" class="card">
+        <h2>Households</h2>
+        <p class="hint">
+          Join a household so everyone can invite players from their own accounts and follow live scores during games.
+        </p>
+
+        <p id="households-empty-hint" class="hint households-empty-hint">
+          You're not in a household yet. Create one for your family or join with an invite code below.
+        </p>
+
+        <div id="households-list" class="households-list" aria-live="polite"></div>
+
+        <div id="households-live-scores" class="households-live-scores hidden">
+          <h3 class="households-subheading">Live scores</h3>
+          <p class="hint coming-soon-note">
+            When household members are playing, active game scores will show up here — coming soon.
+          </p>
+        </div>
+
+        <div class="households-actions">
+          <form id="join-household-form" class="household-form">
+            <h3 class="households-subheading">Join with invite code</h3>
+            <p class="hint">Ask a household owner for their code, or look up a code someone shared with you.</p>
+            <div class="household-form-row">
+              <label class="visually-hidden" for="join-household-code">Invite code</label>
+              <input
+                type="text"
+                id="join-household-code"
+                name="inviteCode"
+                placeholder="Invite code"
+                maxlength="12"
+                autocomplete="off"
+                required
+              />
+              <button type="submit" class="btn btn-primary">Join</button>
+            </div>
+            <p id="join-household-status" class="household-status hidden" aria-live="polite"></p>
+          </form>
+
+          <form id="create-household-form" class="household-form">
+            <h3 class="households-subheading">Create a household</h3>
+            <p class="hint">Start a new household and share the invite code so others can join from their accounts.</p>
+            <div class="household-form-row">
+              <label class="visually-hidden" for="create-household-name">Household name</label>
+              <input
+                type="text"
+                id="create-household-name"
+                name="householdName"
+                placeholder="e.g. Pulsipher family"
+                maxlength="48"
+                autocomplete="off"
+                required
+              />
+              <button type="submit" class="btn btn-secondary">Create</button>
+            </div>
+            <p id="create-household-status" class="household-status hidden" aria-live="polite"></p>
+          </form>
+        </div>
       </section>
 
       <section id="player-profile-view" class="card hidden">
@@ -89,7 +205,7 @@
 
         <div id="skull-king-setup">
           <h2 id="setup-title">New Skull King Game</h2>
-          <p class="hint">Choose who is playing (saved household players or guests), configure rounds, then start the game.</p>
+          <p class="hint">Choose who is playing (your saved players or guests), configure rounds, then start the game.</p>
           <label class="setup-option">
             <input type="checkbox" id="use-expansion-checkbox" />
             Using expansion pack cards
@@ -121,7 +237,7 @@
 
           <div class="setup-section players-setup-section">
             <h3>Players</h3>
-            <p class="hint">Select household players for this game, then add any guests.</p>
+            <p class="hint">Select your saved players for this game, then add any guests.</p>
             <div id="sk-player-picker" class="player-picker-host"></div>
           </div>
           <div class="btn-row">
@@ -151,7 +267,7 @@
           </p>
           <div class="setup-section players-setup-section">
             <h3>Players</h3>
-            <p class="hint">Select household players for this game, then add any guests.</p>
+            <p class="hint">Select your saved players for this game, then add any guests.</p>
             <div id="flip7-player-picker" class="player-picker-host"></div>
           </div>
           <div class="btn-row">

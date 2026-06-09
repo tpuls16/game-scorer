@@ -1,12 +1,68 @@
-const STORAGE_KEY = "game-scorer-profiles";
+const STORAGE_KEY_PREFIX = "game-scorer-profiles";
+const LEGACY_STORAGE_KEY = "game-scorer-profiles";
+const LEGACY_OWNER_KEY = "game-scorer-profiles-owner";
 const STORAGE_VERSION = 1;
 
 /** @typedef {{ id: string, name: string, favorite: boolean }} PlayerProfile */
 
+/** @type {string | null} */
+let profilesUserId = null;
+
 const listeners = new Set();
+
+/** @type {((profiles: PlayerProfile[]) => void) | null} */
+let afterPersistCallback = null;
 
 function notify() {
   listeners.forEach((cb) => cb());
+}
+
+/** @param {(profiles: PlayerProfile[]) => void} callback */
+export function setAfterPersistCallback(callback) {
+  afterPersistCallback = callback;
+}
+
+/** @param {string | null} userId */
+export function setProfilesUserId(userId) {
+  profilesUserId = userId ?? null;
+}
+
+function getProfilesStorageKey() {
+  if (!profilesUserId) return null;
+  return `${STORAGE_KEY_PREFIX}-${profilesUserId}`;
+}
+
+/**
+ * @param {PlayerProfile[]} profiles
+ * @returns {PlayerProfile[]}
+ */
+function normalizeProfiles(profiles) {
+  return profiles
+    .filter((p) => p?.id && typeof p.name === "string")
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      favorite: Boolean(p.favorite),
+    }));
+}
+
+/** @param {PlayerProfile[]} profiles */
+function writeLocalProfiles(profiles) {
+  const key = getProfilesStorageKey();
+  if (!key) return;
+
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify({ version: STORAGE_VERSION, profiles })
+    );
+  } catch (error) {
+    console.error("Failed to save your players", error);
+    throw new Error(
+      "Could not save to browser storage. Check that storage is enabled and you are not in private browsing with storage blocked."
+    );
+  }
+  notify();
 }
 
 function createProfileId() {
@@ -16,10 +72,28 @@ function createProfileId() {
   return `profile-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+/** One-time move from pre-scoped localStorage to per-user key. */
+export function migrateLegacyProfilesForUser(userId) {
+  const scopedKey = `${STORAGE_KEY_PREFIX}-${userId}`;
+  if (localStorage.getItem(scopedKey)) return;
+
+  const legacyOwner = localStorage.getItem(LEGACY_OWNER_KEY);
+  const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+  if (!legacyRaw) return;
+  if (legacyOwner && legacyOwner !== userId) return;
+
+  localStorage.setItem(scopedKey, legacyRaw);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
+  localStorage.removeItem(LEGACY_OWNER_KEY);
+}
+
 /** @returns {PlayerProfile[]} */
 export function loadProfiles() {
+  const key = getProfilesStorageKey();
+  if (!key) return [];
+
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const data = JSON.parse(raw);
     if (!Array.isArray(data?.profiles)) return [];
@@ -62,20 +136,15 @@ export function loadProfilesSplit() {
   };
 }
 
+/** Replace local saved players without triggering cloud sync (e.g. after pull). */
+export function replaceProfiles(profiles) {
+  writeLocalProfiles(normalizeProfiles(profiles));
+}
+
 /** @param {PlayerProfile[]} profiles */
 function persistProfiles(profiles) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ version: STORAGE_VERSION, profiles })
-    );
-  } catch (error) {
-    console.error("Failed to save household players", error);
-    throw new Error(
-      "Could not save to browser storage. Check that storage is enabled and you are not in private browsing with storage blocked."
-    );
-  }
-  notify();
+  writeLocalProfiles(profiles);
+  afterPersistCallback?.(profiles);
 }
 
 /** @param {string} name */
@@ -151,8 +220,4 @@ export function findProfileByName(name) {
 export function subscribeProfiles(listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);
-}
-
-export function getProfilesStorageKey() {
-  return STORAGE_KEY;
 }

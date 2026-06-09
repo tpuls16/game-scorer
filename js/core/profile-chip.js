@@ -46,7 +46,7 @@ export function renderFavoriteProfileChips(container, {
 export function mountOtherProfilesDropdown({
   onPick,
   placeholder = "Choose a player…",
-  labelText = "Other household players",
+  labelText = "Other saved players",
   isOptionDisabled,
   formatOptionLabel,
 }) {

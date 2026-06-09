@@ -18,8 +18,13 @@ import {
 } from "./deck.js";
 import { createNumberField } from "../../core/ui-utils.js";
 import { createPlayerPicker } from "../../core/player-picker.js";
+import { scopedStorageKey } from "../../core/user-storage.js";
 
-const STORAGE_KEY = "skull-king-game";
+const STORAGE_KEY_BASE = "skull-king-game";
+
+function gameStorageKey() {
+  return scopedStorageKey(STORAGE_KEY_BASE);
+}
 
 /** @type {{ showView: (view: string, gameId: string) => void, showExitGameConfirm: (fn: () => void) => void, exitToHome: () => void } | null} */
 let shellRef = null;
@@ -263,11 +268,11 @@ function clampSavedRoundCards(roundNum, savedGame, playerCount, useExpansion) {
 }
 
 function saveGame() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
+  localStorage.setItem(gameStorageKey(), JSON.stringify(game));
 }
 
 function loadGame() {
-  const saved = localStorage.getItem(STORAGE_KEY);
+  const saved = localStorage.getItem(gameStorageKey());
   if (!saved) return null;
   try {
     return JSON.parse(saved);
@@ -277,7 +282,7 @@ function loadGame() {
 }
 
 function clearGame() {
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(gameStorageKey());
   game = null;
 }
 
@@ -977,11 +982,11 @@ export function createSkullKingApp(shell) {
 
   return {
     id: "skull-king",
-    storageKey: STORAGE_KEY,
+    storageKey: STORAGE_KEY_BASE,
     loadSavedGame,
     initSetupView,
     clearGame,
-    hasSavedGame: () => Boolean(localStorage.getItem(STORAGE_KEY)),
+    hasSavedGame: () => Boolean(localStorage.getItem(gameStorageKey())),
     onSetupVisible: () => {
       setupPlayerPicker?.refreshProfiles?.();
       renderRoundSchedule({ preserveCustom: false });

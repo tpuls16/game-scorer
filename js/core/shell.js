@@ -1,10 +1,14 @@
 import { GAMES, DEFAULT_GAME_ID, getGameById, createGameModules } from "./catalog.js";
+import { isSignedIn } from "./auth.js";
+import { bindAuthNavigation } from "./auth-page.js";
 import { bindProfileNavigation } from "./player-profile-page.js";
 
 const appTitle = document.getElementById("app-title");
 const appSubtitle = document.getElementById("app-subtitle");
 const homeView = document.getElementById("home-view");
+const authView = document.getElementById("auth-view");
 const profilesView = document.getElementById("profiles-view");
+const householdsView = document.getElementById("households-view");
 const playerProfileView = document.getElementById("player-profile-view");
 const gamePickerEl = document.getElementById("game-picker");
 const setupView = document.getElementById("setup-view");
@@ -60,6 +64,14 @@ function updateAppHeader(view) {
     return;
   }
 
+  if (view === "auth") {
+    appTitle.textContent = "Game Scorer";
+    appSubtitle.textContent = "Sign in to continue";
+    document.title = "Sign in — Game Scorer";
+    document.body.dataset.theme = "home";
+    return;
+  }
+
   if (view === "player-profile") {
     document.body.dataset.theme = "home";
     document.title = `${appTitle.textContent} — Game Scorer`;
@@ -82,12 +94,20 @@ function updateAppHeader(view) {
 }
 
 function showView(view, gameId = selectedGameId) {
+  if (view !== "auth" && !isSignedIn()) {
+    selectedGameId = DEFAULT_GAME_ID;
+    view = "auth";
+    gameId = DEFAULT_GAME_ID;
+  }
+
   const isSkullKing = gameId === "skull-king";
   const isFlip7 = gameId === "flip7";
   const isRook = gameId === "rook";
 
   homeView.classList.toggle("hidden", view !== "home");
+  authView?.classList.toggle("hidden", view !== "auth");
   profilesView?.classList.toggle("hidden", view !== "home");
+  householdsView?.classList.toggle("hidden", view !== "home");
   playerProfileView?.classList.toggle("hidden", view !== "player-profile");
   setupView.classList.toggle("hidden", view !== "setup");
 
@@ -138,8 +158,17 @@ function renderGamePicker() {
 }
 
 function showHomeView() {
+  if (!isSignedIn()) {
+    showAuthView();
+    return;
+  }
   selectedGameId = DEFAULT_GAME_ID;
   showView("home");
+}
+
+function showAuthView() {
+  selectedGameId = DEFAULT_GAME_ID;
+  showView("auth");
 }
 
 function selectGame(gameId) {
@@ -171,30 +200,6 @@ function initFromSavedGame() {
   showHomeView();
 }
 
-gamePickerEl.addEventListener("click", (event) => {
-  const card = event.target.closest("[data-game-id]");
-  if (!card) return;
-  selectGame(card.dataset.gameId);
-});
-
-document.getElementById("back-to-home-btn").addEventListener("click", showHomeView);
-document.getElementById("game-over-back-to-home-btn")?.addEventListener("click", showHomeView);
-
-confirmDialogCancel.addEventListener("click", closeExitGameConfirm);
-confirmDialogConfirm.addEventListener("click", confirmExitGame);
-confirmDialog.querySelector("[data-confirm-dismiss]").addEventListener("click", closeExitGameConfirm);
-
-document.addEventListener("keydown", (event) => {
-  if (!confirmDialog.classList.contains("hidden") && event.key === "Escape") {
-    closeExitGameConfirm();
-    return;
-  }
-  const mod = getActiveModule();
-  if (mod?.isSettingsOpen?.() && event.key === "Escape") {
-    mod.handleSettingsEscape();
-  }
-});
-
 bindProfileNavigation({
   showView,
   showHomeView,
@@ -205,5 +210,43 @@ bindProfileNavigation({
   },
 });
 
-renderGamePicker();
-initFromSavedGame();
+bindAuthNavigation({
+  showAuthView,
+  showHomeView,
+});
+
+function wireShellEvents() {
+  gamePickerEl.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-game-id]");
+    if (!card) return;
+    selectGame(card.dataset.gameId);
+  });
+
+  document.getElementById("back-to-home-btn").addEventListener("click", showHomeView);
+  document.getElementById("game-over-back-to-home-btn")?.addEventListener("click", showHomeView);
+
+  confirmDialogCancel.addEventListener("click", closeExitGameConfirm);
+  confirmDialogConfirm.addEventListener("click", confirmExitGame);
+  confirmDialog.querySelector("[data-confirm-dismiss]").addEventListener("click", closeExitGameConfirm);
+
+  document.addEventListener("keydown", (event) => {
+    if (!confirmDialog.classList.contains("hidden") && event.key === "Escape") {
+      closeExitGameConfirm();
+      return;
+    }
+    const mod = getActiveModule();
+    if (mod?.isSettingsOpen?.() && event.key === "Escape") {
+      mod.handleSettingsEscape();
+    }
+  });
+}
+
+export function startApp() {
+  renderGamePicker();
+  wireShellEvents();
+  if (isSignedIn()) {
+    initFromSavedGame();
+  } else {
+    showAuthView();
+  }
+}

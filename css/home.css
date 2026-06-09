@@ -144,3 +144,191 @@ body[data-theme="home"] .profile-chip[aria-pressed="true"] {
 body[data-theme="home"] .profiles-other-select-text {
   color: var(--gold-light);
 }
+
+/* Account bar + auth (Phase 1 Supabase) */
+
+body[data-theme="home"] .account-bar {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(42, 38, 54, 0.65);
+}
+
+body[data-theme="home"] .account-signed-in,
+body[data-theme="home"] .account-guest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
+}
+
+body[data-theme="home"] .account-email {
+  font-size: 0.9rem;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .account-guest-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+body[data-theme="home"] .btn-account {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.85rem;
+}
+
+body[data-theme="home"] .profiles-sync-hint {
+  color: var(--accent);
+  margin-top: 0.25rem;
+}
+
+body[data-theme="home"] .auth-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+body[data-theme="home"] .auth-mode-btn {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+body[data-theme="home"] .auth-mode-btn.is-active {
+  color: var(--gold-light);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+body[data-theme="home"] .auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+body[data-theme="home"] .auth-form input {
+  margin-bottom: 0.5rem;
+}
+
+body[data-theme="home"] .auth-status {
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin: 0.25rem 0 0.5rem;
+}
+
+body[data-theme="home"] .auth-status.auth-status-error {
+  color: var(--danger);
+}
+
+body[data-theme="home"] .auth-submit-btn {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+body[data-theme="home"] .auth-guest-btn {
+  width: 100%;
+}
+
+/* Households (Phase 2) */
+
+body[data-theme="home"] .households-empty-hint {
+  margin-bottom: 0.75rem;
+}
+
+body[data-theme="home"] .households-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+body[data-theme="home"] .household-card {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(42, 38, 54, 0.55);
+}
+
+body[data-theme="home"] .household-card-name {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .household-card-meta {
+  margin: 0;
+}
+
+body[data-theme="home"] .household-card-share {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+}
+
+body[data-theme="home"] .households-subheading {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .households-live-scores {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+  background: rgba(126, 184, 164, 0.06);
+}
+
+body[data-theme="home"] .households-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+body[data-theme="home"] .household-invite-controls {
+  margin-top: 0.75rem;
+}
+
+body[data-theme="home"] .household-invite-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+body[data-theme="home"] .household-invite-input {
+  flex: 1;
+  min-width: 10rem;
+}
+
+body[data-theme="home"] .household-card-status {
+  margin-top: 0.5rem;
+}
+
+body[data-theme="home"] .household-form-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+body[data-theme="home"] .household-form-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+body[data-theme="home"] .household-status {
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin: 0.35rem 0 0;
+}
+
+body[data-theme="home"] .household-status.household-status-error {
+  color: var(--danger);
+}
