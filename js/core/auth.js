@@ -250,6 +250,7 @@ export async function initAuth() {
   }
 
   currentUser = session?.user ?? null;
+  notify();
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {

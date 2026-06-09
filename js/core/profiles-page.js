@@ -15,8 +15,15 @@ let addProfileForm = null;
 let addProfileInput = null;
 let profilesEmptyHint = null;
 let saveProfileBtn = null;
+let profileDeleteDialogEl = null;
+let profileDeleteStep1El = null;
+let profileDeleteStep2El = null;
+let profileDeleteStep1MessageEl = null;
+let profileDeleteStep2MessageEl = null;
 /** @type {string | null} */
 let editingProfileId = null;
+/** @type {string | null} */
+let pendingDeleteProfileId = null;
 
 /**
  * @param {HTMLElement} container
@@ -94,9 +101,7 @@ function appendProfileListItem(container, profile) {
   deleteBtn.addEventListener("click", () => {
     const current = loadProfiles().find((p) => p.id === profile.id);
     if (!current) return;
-    if (!confirm(`Remove "${current.name}" from saved players?`)) return;
-    if (editingProfileId === profile.id) editingProfileId = null;
-    removeProfile(profile.id);
+    openProfileDeleteDialog(current);
   });
 
   actions.append(profileBtn, editBtn, deleteBtn);
@@ -183,12 +188,56 @@ function handleAddProfile(event) {
   saveProfileFromInput();
 }
 
+function showProfileDeleteStep(step) {
+  profileDeleteStep1El?.classList.toggle("hidden", step !== 1);
+  profileDeleteStep2El?.classList.toggle("hidden", step !== 2);
+}
+
+function closeProfileDeleteDialog() {
+  pendingDeleteProfileId = null;
+  profileDeleteDialogEl?.classList.add("hidden");
+  showProfileDeleteStep(1);
+}
+
+function openProfileDeleteDialog(profile) {
+  pendingDeleteProfileId = profile.id;
+  if (profileDeleteStep1MessageEl) {
+    profileDeleteStep1MessageEl.textContent = `Remove "${profile.name}" from your saved players?`;
+  }
+  if (profileDeleteStep2MessageEl) {
+    profileDeleteStep2MessageEl.textContent = `This permanently deletes "${profile.name}" from this account. Game history for this player will remain, but they will no longer appear in your roster.`;
+  }
+  showProfileDeleteStep(1);
+  profileDeleteDialogEl?.classList.remove("hidden");
+  document.getElementById("profile-delete-cancel-btn")?.focus();
+}
+
+function confirmProfileDelete() {
+  const profileId = pendingDeleteProfileId;
+  if (!profileId) return;
+
+  const profile = loadProfiles().find((p) => p.id === profileId);
+  if (!profile) {
+    closeProfileDeleteDialog();
+    return;
+  }
+
+  if (editingProfileId === profileId) editingProfileId = null;
+  removeProfile(profileId);
+  closeProfileDeleteDialog();
+}
+
 export function initProfilesPage() {
   profilesListEl = document.getElementById("profiles-list");
   addProfileForm = document.getElementById("add-profile-form");
   addProfileInput = document.getElementById("add-profile-name");
   profilesEmptyHint = document.getElementById("profiles-empty-hint");
   saveProfileBtn = document.getElementById("add-profile-save-btn");
+  profileDeleteDialogEl = document.getElementById("profile-delete-dialog");
+  profileDeleteStep1El = document.getElementById("profile-delete-step-1");
+  profileDeleteStep2El = document.getElementById("profile-delete-step-2");
+  profileDeleteStep1MessageEl = document.getElementById("profile-delete-step1-message");
+  profileDeleteStep2MessageEl = document.getElementById("profile-delete-step2-message");
 
   if (!profilesListEl || !addProfileForm || !addProfileInput) {
     console.error("Saved players UI elements are missing from the page.");
@@ -199,6 +248,25 @@ export function initProfilesPage() {
   saveProfileBtn?.addEventListener("click", (event) => {
     event.preventDefault();
     saveProfileFromInput();
+  });
+
+  document.getElementById("profile-delete-cancel-btn")?.addEventListener("click", closeProfileDeleteDialog);
+  document.getElementById("profile-delete-continue-btn")?.addEventListener("click", () => {
+    showProfileDeleteStep(2);
+    document.getElementById("profile-delete-back-btn")?.focus();
+  });
+  document.getElementById("profile-delete-back-btn")?.addEventListener("click", () => {
+    showProfileDeleteStep(1);
+    document.getElementById("profile-delete-cancel-btn")?.focus();
+  });
+  document.getElementById("profile-delete-confirm-btn")?.addEventListener("click", confirmProfileDelete);
+  profileDeleteDialogEl
+    ?.querySelector("[data-profile-delete-dismiss]")
+    ?.addEventListener("click", closeProfileDeleteDialog);
+
+  document.addEventListener("keydown", (event) => {
+    if (profileDeleteDialogEl?.classList.contains("hidden")) return;
+    if (event.key === "Escape") closeProfileDeleteDialog();
   });
 
   subscribeProfiles(() => {
@@ -217,8 +285,3 @@ export function initProfilesPage() {
   renderProfilesList();
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initProfilesPage);
-} else {
-  initProfilesPage();
-}

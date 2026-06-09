@@ -74,6 +74,9 @@ export function normalizeRoundInput(roundData = {}) {
   }
 
   numberCards = [...new Set(numberCards)].sort((a, b) => a - b);
+  if (numberCards.length > FLIP7_REQUIRED_NUMBER_CARDS) {
+    numberCards = numberCards.slice(0, FLIP7_REQUIRED_NUMBER_CARDS);
+  }
 
   const plusModifiers = Array.isArray(roundData.plusModifiers)
     ? [...roundData.plusModifiers].map(Number).filter((n) => !Number.isNaN(n))

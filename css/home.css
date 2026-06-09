@@ -105,6 +105,41 @@ body[data-theme="home"] .game-card[data-game-id="rook"]:not(:disabled) {
   border-left: 4px solid #5a9d6e;
 }
 
+body[data-theme="home"] .active-game-resume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--accent);
+  background: rgba(123, 47, 247, 0.12);
+}
+
+body[data-theme="home"] .active-game-resume.hidden {
+  display: none;
+}
+
+body[data-theme="home"] .active-game-resume-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+body[data-theme="home"] .active-game-resume-summary {
+  margin: 0;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+body[data-theme="home"] .active-game-resume .btn {
+  flex-shrink: 0;
+}
+
 body[data-theme="home"] .game-card-name {
   color: var(--text);
 }

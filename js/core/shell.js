@@ -1,6 +1,7 @@
 import { GAMES, DEFAULT_GAME_ID, getGameById, createGameModules } from "./catalog.js";
+import { getInProgressGameId, getInProgressGameInfo } from "./active-game.js";
 import { isPasswordRecoveryPending, isSignedIn } from "./auth.js";
-import { bindAuthNavigation } from "./auth-page.js";
+import { bindAuthNavigation, setFamilySettingsAvailable } from "./auth-page.js";
 import { bindGameHistoryNavigation, renderHomeRecentGames } from "./game-history-page.js";
 import { bindProfileNavigation } from "./player-profile-page.js";
 
@@ -17,17 +18,30 @@ const setupView = document.getElementById("setup-view");
 const gameView = document.getElementById("game-view");
 const gameOverView = document.getElementById("game-over-view");
 const confirmDialog = document.getElementById("confirm-dialog");
+const confirmDialogTitle = document.getElementById("confirm-dialog-title");
 const confirmDialogMessage = document.getElementById("confirm-dialog-message");
 const confirmDialogCancel = document.getElementById("confirm-dialog-cancel");
 const confirmDialogConfirm = document.getElementById("confirm-dialog-confirm");
+const activeGameResumeEl = document.getElementById("active-game-resume");
+const activeGameResumeSummaryEl = document.getElementById("active-game-resume-summary");
+const activeGameResumeBtn = document.getElementById("active-game-resume-btn");
 
 let selectedGameId = DEFAULT_GAME_ID;
 let confirmDialogOnConfirm = null;
+/** @type {string} */
+let currentAppView = "auth";
+
+/** Views where family account settings belong (not inside a game). */
+function isHomeHubView(view) {
+  return view === "home" || view === "player-profile" || view === "game-history";
+}
 
 const shell = {
   showView,
   showExitGameConfirm,
+  showConfirmDialog,
   exitToHome,
+  pauseToHome,
 };
 
 const gameModules = createGameModules(shell);
@@ -36,12 +50,33 @@ function getActiveModule() {
   return gameModules[selectedGameId];
 }
 
-function showExitGameConfirm(onConfirm) {
+/**
+ * @param {{
+ *   title: string,
+ *   message: string,
+ *   confirmLabel: string,
+ *   cancelLabel: string,
+ *   onConfirm: () => void,
+ * }} options
+ */
+function showConfirmDialog({ title, message, confirmLabel, cancelLabel, onConfirm }) {
   confirmDialogOnConfirm = onConfirm;
-  confirmDialogMessage.textContent =
-    "Are you sure you want to leave this game? All scores and progress will be lost.";
+  if (confirmDialogTitle) confirmDialogTitle.textContent = title;
+  confirmDialogMessage.textContent = message;
+  if (confirmDialogCancel) confirmDialogCancel.textContent = cancelLabel;
+  if (confirmDialogConfirm) confirmDialogConfirm.textContent = confirmLabel;
   confirmDialog.classList.remove("hidden");
   confirmDialogConfirm.focus();
+}
+
+function showExitGameConfirm(onConfirm) {
+  showConfirmDialog({
+    title: "Exit game?",
+    message: "Are you sure you want to leave this game? All scores and progress will be lost.",
+    confirmLabel: "Exit game",
+    cancelLabel: "Keep playing",
+    onConfirm,
+  });
 }
 
 function closeExitGameConfirm() {
@@ -110,6 +145,8 @@ function showView(view, gameId = selectedGameId) {
     gameId = DEFAULT_GAME_ID;
   }
 
+  currentAppView = view;
+
   const isSkullKing = gameId === "skull-king";
   const isFlip7 = gameId === "flip7";
   const isRook = gameId === "rook";
@@ -141,6 +178,7 @@ function showView(view, gameId = selectedGameId) {
   }
 
   updateAppHeader(view);
+  setFamilySettingsAvailable(isHomeHubView(view));
 }
 
 function renderGamePicker() {
@@ -168,6 +206,15 @@ function renderGamePicker() {
   }).join("");
 }
 
+function renderActiveGameResume() {
+  const info = getInProgressGameInfo();
+  activeGameResumeEl?.classList.toggle("hidden", !info);
+  if (!info) return;
+  if (activeGameResumeSummaryEl) {
+    activeGameResumeSummaryEl.textContent = info.summary;
+  }
+}
+
 function showHomeView() {
   if (!isSignedIn()) {
     showAuthView();
@@ -175,7 +222,38 @@ function showHomeView() {
   }
   selectedGameId = DEFAULT_GAME_ID;
   showView("home");
+  setFamilySettingsAvailable(true);
   renderHomeRecentGames();
+  renderActiveGameResume();
+}
+
+function pauseToHome() {
+  showHomeView();
+}
+
+function archiveGamesBeforeClear() {
+  Object.values(gameModules).forEach((mod) => mod.archiveToHistory?.());
+}
+
+function clearAllGames() {
+  archiveGamesBeforeClear();
+  Object.values(gameModules).forEach((mod) => mod.clearGame());
+}
+
+function resumeActiveGame() {
+  const gameId = getInProgressGameId();
+  if (!gameId) {
+    showHomeView();
+    return;
+  }
+  selectedGameId = gameId;
+  gameModules[gameId].loadSavedGame();
+}
+
+function startGameSetup(gameId) {
+  selectedGameId = gameId;
+  getActiveModule().initSetupView();
+  getActiveModule().onSetupVisible?.();
 }
 
 function showAuthView() {
@@ -186,13 +264,34 @@ function showAuthView() {
 function selectGame(gameId) {
   const gameDef = getGameById(gameId);
   if (!gameDef?.available) return;
-  selectedGameId = gameId;
-  getActiveModule().initSetupView();
-  getActiveModule().onSetupVisible?.();
+
+  const activeGameId = getInProgressGameId();
+  if (activeGameId === gameId) {
+    resumeActiveGame();
+    return;
+  }
+
+  if (activeGameId) {
+    const activeDef = getGameById(activeGameId);
+    showConfirmDialog({
+      title: "Replace active game?",
+      message: `You have ${activeDef?.name ?? "a game"} in progress. Starting ${gameDef.name} will delete that saved game.`,
+      confirmLabel: "Start new game",
+      cancelLabel: "Keep current game",
+      onConfirm: () => {
+        clearAllGames();
+        startGameSetup(gameId);
+        renderActiveGameResume();
+      },
+    });
+    return;
+  }
+
+  startGameSetup(gameId);
 }
 
 function exitToHome() {
-  Object.values(gameModules).forEach((mod) => mod.clearGame());
+  clearAllGames();
   showHomeView();
 }
 
@@ -242,6 +341,8 @@ function wireShellEvents() {
 
   document.getElementById("back-to-home-btn").addEventListener("click", showHomeView);
   document.getElementById("game-over-back-to-home-btn")?.addEventListener("click", showHomeView);
+  document.getElementById("pause-to-home-btn")?.addEventListener("click", pauseToHome);
+  activeGameResumeBtn?.addEventListener("click", resumeActiveGame);
 
   confirmDialogCancel.addEventListener("click", closeExitGameConfirm);
   confirmDialogConfirm.addEventListener("click", confirmExitGame);
@@ -264,7 +365,7 @@ export function resumeCurrentAccount() {
     showAuthView();
     return;
   }
-  Object.values(gameModules).forEach((mod) => mod.clearGame());
+  clearAllGames();
   initFromSavedGame();
 }
 

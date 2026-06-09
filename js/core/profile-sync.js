@@ -13,6 +13,7 @@ import { migrateAccountScopedStorage, setActiveUserId } from "./user-storage.js"
 
 let cloudSyncEnabled = false;
 let syncInProgress = false;
+let pendingCloudSync = false;
 
 /**
  * @param {PlayerProfile[]} profiles
@@ -102,8 +103,40 @@ async function pushProfilesToCloud(userId, profiles) {
   }
 }
 
+/**
+ * @param {PlayerProfile[]} cloud
+ * @param {PlayerProfile[]} local
+ * @returns {PlayerProfile[]}
+ */
+function mergeCloudAndLocalProfiles(cloud, local) {
+  const cloudIds = new Set(cloud.map((profile) => profile.id));
+  const localOnly = local.filter((profile) => !cloudIds.has(profile.id));
+  return [...cloud, ...localOnly];
+}
+
+async function flushPendingCloudSync() {
+  if (!pendingCloudSync || !cloudSyncEnabled || syncInProgress) return;
+  const user = getCurrentUser();
+  if (!user) return;
+
+  pendingCloudSync = false;
+  const profiles = loadProfiles();
+  if (profiles.length === 0) return;
+
+  try {
+    await pushProfilesToCloud(user.id, profiles);
+  } catch (error) {
+    pendingCloudSync = true;
+    console.error("Player cloud sync failed", error);
+  }
+}
+
 export async function syncProfilesToCloud(profiles) {
-  if (!cloudSyncEnabled || syncInProgress) return;
+  if (!cloudSyncEnabled) return;
+  if (syncInProgress) {
+    pendingCloudSync = true;
+    return;
+  }
   const user = getCurrentUser();
   if (!user) return;
   await pushProfilesToCloud(user.id, profiles);
@@ -111,7 +144,7 @@ export async function syncProfilesToCloud(profiles) {
 
 export async function syncAccountPlayers() {
   const user = getCurrentUser();
-  if (!user) return;
+  if (!user || syncInProgress) return;
 
   syncInProgress = true;
   try {
@@ -122,18 +155,21 @@ export async function syncAccountPlayers() {
     const local = loadProfiles();
 
     if (cloud.length > 0) {
-      replaceProfiles(cloud);
+      const merged = mergeCloudAndLocalProfiles(cloud, local);
+      replaceProfiles(merged);
+      if (merged.length > cloud.length) {
+        await pushProfilesToCloud(user.id, merged);
+      }
       return;
     }
 
-    if (local.length > 0) {
-      await pushProfilesToCloud(user.id, local);
-      return;
+    const localAfterFetch = loadProfiles();
+    if (localAfterFetch.length > 0) {
+      await pushProfilesToCloud(user.id, localAfterFetch);
     }
-
-    replaceProfiles([]);
   } finally {
     syncInProgress = false;
+    flushPendingCloudSync();
   }
 }
 
@@ -142,6 +178,7 @@ function bindUserSession(user) {
     setActiveUserId(null);
     setProfilesUserId(null);
     cloudSyncEnabled = false;
+    pendingCloudSync = false;
     return;
   }
 
@@ -155,10 +192,13 @@ function bindUserSession(user) {
 }
 
 export function initProfileSync() {
-  setAfterPersistCallback((profiles) => {
-    if (!cloudSyncEnabled || syncInProgress) return;
-    if (!getCurrentUser()) return;
-    syncProfilesToCloud(profiles).catch((error) => {
+  setAfterPersistCallback(() => {
+    if (!cloudSyncEnabled || !getCurrentUser()) return;
+    if (syncInProgress) {
+      pendingCloudSync = true;
+      return;
+    }
+    syncProfilesToCloud(loadProfiles()).catch((error) => {
       console.error("Player cloud sync failed", error);
     });
   });

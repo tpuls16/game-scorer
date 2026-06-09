@@ -50,7 +50,9 @@ function normalizeProfiles(profiles) {
 /** @param {PlayerProfile[]} profiles */
 function writeLocalProfiles(profiles) {
   const key = getProfilesStorageKey();
-  if (!key) return;
+  if (!key) {
+    throw new Error("Sign in to save players to your account.");
+  }
 
   try {
     localStorage.setItem(

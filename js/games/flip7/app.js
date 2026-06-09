@@ -101,6 +101,18 @@ function loadGame() {
   }
 }
 
+function getGameSnapshot() {
+  if (game) return game;
+  const saved = loadGame();
+  return saved ? normalizeSavedGame(saved) : null;
+}
+
+function archiveToHistory({ endedEarly = true } = {}) {
+  const snapshot = getGameSnapshot();
+  if (!snapshot) return false;
+  return tryRecordGameHistory(snapshot, { endedEarly });
+}
+
 function clearGame() {
   localStorage.removeItem(gameStorageKey());
   game = null;
@@ -203,11 +215,56 @@ function setCardBusted(card, busted) {
       btn.classList.remove("is-selected");
       btn.setAttribute("aria-pressed", "false");
     });
+    card.querySelectorAll(".flip7-num-btn").forEach((btn) => {
+      btn.disabled = false;
+      btn.classList.remove("is-locked");
+      btn.removeAttribute("aria-disabled");
+    });
+    updatePlayerCardPreview(card);
+    return;
   }
+  refreshCardPicker(card);
+}
+
+function countSelectedNumberCards(card) {
+  return card.querySelectorAll(".flip7-num-btn.is-selected").length;
+}
+
+function updateNumberPickerLimits(card) {
+  if (!card || card.classList.contains("is-busted")) return;
+
+  const selectedCount = countSelectedNumberCards(card);
+  const flip7Reached = selectedCount >= FLIP7_REQUIRED_NUMBER_CARDS;
+
+  card.querySelectorAll(".flip7-num-btn").forEach((btn) => {
+    const isSelected = btn.classList.contains("is-selected");
+    const locked = flip7Reached && !isSelected;
+    btn.disabled = locked;
+    btn.classList.toggle("is-locked", locked);
+    btn.setAttribute("aria-disabled", locked ? "true" : "false");
+  });
+
+  const numberLabel = card.querySelector(".flip7-number-grid")?.previousElementSibling;
+  if (numberLabel?.classList.contains("flip7-picker-label")) {
+    numberLabel.textContent = flip7Reached
+      ? `Flip 7 bonus earned (${FLIP7_REQUIRED_NUMBER_CARDS} cards) — deselect a card to change numbers`
+      : `Number cards (${selectedCount}/${FLIP7_REQUIRED_NUMBER_CARDS} for Flip 7)`;
+  }
+
+  const modHint = card.querySelector(".flip7-picker-hint");
+  if (modHint) {
+    modHint.textContent = flip7Reached
+      ? "Add score modifiers below. Number cards are locked at 7."
+      : `Select ${FLIP7_REQUIRED_NUMBER_CARDS} different number cards for the Flip 7 bonus. Modifiers do not count toward it.`;
+  }
+}
+
+function refreshCardPicker(card) {
+  updateNumberPickerLimits(card);
   updatePlayerCardPreview(card);
 }
 
-function createPickButton(label, className, { selected = false, onChange } = {}) {
+function createPickButton(label, className, { selected = false, onChange, canSelect } = {}) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = `flip7-pick-btn ${className}`;
@@ -217,6 +274,8 @@ function createPickButton(label, className, { selected = false, onChange } = {})
 
   btn.addEventListener("click", () => {
     const next = !btn.classList.contains("is-selected");
+    if (next && canSelect && !canSelect(btn)) return;
+
     btn.classList.toggle("is-selected", next);
     btn.setAttribute("aria-pressed", next ? "true" : "false");
     const card = btn.closest(".flip7-player-card");
@@ -253,7 +312,7 @@ function restorePickerFromRoundData(card, roundData) {
     btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
 
-  updatePlayerCardPreview(card);
+  refreshCardPicker(card);
 }
 
 function renderSetupInputs() {
@@ -367,17 +426,25 @@ function buildPlayerRoundFields(playerIndex, roundData = null) {
   const picker = document.createElement("div");
   picker.className = "flip7-card-picker";
 
-  const onPickerChange = () => updatePlayerCardPreview(card);
+  const onPickerChange = () => refreshCardPicker(card);
+  const canSelectNumberCard = (btn) => {
+    const playerCard = btn.closest(".flip7-player-card");
+    if (!playerCard) return true;
+    return countSelectedNumberCards(playerCard) < FLIP7_REQUIRED_NUMBER_CARDS;
+  };
 
   const numberSection = document.createElement("div");
   numberSection.className = "flip7-picker-section";
   const numberLabel = document.createElement("p");
   numberLabel.className = "flip7-picker-label";
-  numberLabel.textContent = "Number cards (tap each card in your row)";
+  numberLabel.textContent = `Number cards (0/${FLIP7_REQUIRED_NUMBER_CARDS} for Flip 7)`;
   const numberGrid = document.createElement("div");
   numberGrid.className = "flip7-pick-grid flip7-number-grid";
   NUMBER_CARD_VALUES.forEach((value) => {
-    const btn = createPickButton(String(value), "flip7-num-btn", { onChange: onPickerChange });
+    const btn = createPickButton(String(value), "flip7-num-btn", {
+      onChange: onPickerChange,
+      canSelect: canSelectNumberCard,
+    });
     btn.dataset.value = String(value);
     numberGrid.append(btn);
   });
@@ -847,6 +914,7 @@ export function createFlip7App(shell) {
     loadSavedGame,
     initSetupView,
     clearGame,
+    archiveToHistory,
     hasSavedGame: () => Boolean(localStorage.getItem(gameStorageKey())),
     handleSettingsEscape: closeGameSettings,
     isSettingsOpen: () => !settingsDialog.classList.contains("hidden"),

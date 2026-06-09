@@ -179,11 +179,29 @@ function updateAddAnotherHint() {
   authAddAnotherHintEl.classList.toggle("hidden", !show);
 }
 
+let familySettingsAvailable = true;
+
 function updateAccountBar(user) {
   if (!accountBarEl) return;
   const showBar = Boolean(user) && !isPasswordRecoveryPending();
   accountBarEl.classList.toggle("hidden", !showBar);
   profilesSyncHint?.classList.toggle("hidden", !showBar);
+  updateFamilySettingsButton();
+}
+
+/** @param {boolean} available */
+export function setFamilySettingsAvailable(available) {
+  familySettingsAvailable = available;
+  updateFamilySettingsButton();
+  if (!available) {
+    closeAccountSettings();
+  }
+}
+
+function updateFamilySettingsButton() {
+  const signedIn = Boolean(getCurrentUser()) && !isPasswordRecoveryPending();
+  const showSettings = signedIn && familySettingsAvailable;
+  accountSettingsBtn?.classList.toggle("hidden", !showSettings);
 }
 
 function getActiveAccountLabel() {

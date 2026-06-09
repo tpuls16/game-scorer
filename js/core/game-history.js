@@ -173,6 +173,18 @@ function buildRookHistory(game) {
 }
 
 /** @param {unknown} game */
+function gameHasHistoryProgress(game) {
+  if (!game?.players?.length) return false;
+
+  const gameId = game.gameId ?? "skull-king";
+  if (gameId === "rook") {
+    return (game.rounds?.length ?? 0) > 0;
+  }
+
+  return game.players.some((player) => (player.rounds?.length ?? 0) > 0);
+}
+
+/** @param {unknown} game */
 function buildHistorySummary(game) {
   const gameId = game.gameId ?? "skull-king";
   switch (gameId) {
@@ -189,15 +201,25 @@ function buildHistorySummary(game) {
 
 /**
  * @param {Record<string, unknown> & { completed?: boolean, historyRecorded?: boolean }} game
+ * @param {{ endedEarly?: boolean }} [options]
  * @returns {boolean}
  */
-export function tryRecordGameHistory(game) {
-  if (!game?.completed || game.historyRecorded) return false;
+export function tryRecordGameHistory(game, { endedEarly = false } = {}) {
+  if (!game || game.historyRecorded) return false;
+
+  const canRecord =
+    Boolean(game.completed) || (endedEarly && gameHasHistoryProgress(game));
+  if (!canRecord) return false;
 
   const summary = buildHistorySummary(game);
   if (!summary) return false;
 
   const gameDef = getGameById(summary.gameId);
+  const meta = { ...summary.meta };
+  if (endedEarly && !game.completed) {
+    meta.endedEarly = true;
+  }
+
   appendHistoryEntry({
     id: createHistoryId(),
     gameId: summary.gameId,
@@ -205,7 +227,7 @@ export function tryRecordGameHistory(game) {
     completedAt: new Date().toISOString(),
     players: summary.players,
     standings: summary.standings,
-    meta: summary.meta,
+    meta,
   });
 
   game.historyRecorded = true;

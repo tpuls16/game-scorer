@@ -102,6 +102,18 @@ function loadGame() {
   }
 }
 
+function getGameSnapshot() {
+  if (game) return game;
+  const saved = loadGame();
+  return saved ? normalizeSavedGame(saved) : null;
+}
+
+function archiveToHistory({ endedEarly = true } = {}) {
+  const snapshot = getGameSnapshot();
+  if (!snapshot) return false;
+  return tryRecordGameHistory(snapshot, { endedEarly });
+}
+
 function clearGame() {
   localStorage.removeItem(gameStorageKey());
   game = null;
@@ -673,6 +685,7 @@ export function createRookApp(shell) {
     loadSavedGame,
     initSetupView,
     clearGame,
+    archiveToHistory,
     hasSavedGame: () => Boolean(localStorage.getItem(gameStorageKey())),
     onSetupVisible: () => {
       setupPlayerPicker?.refreshProfiles?.();

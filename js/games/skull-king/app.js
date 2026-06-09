@@ -112,7 +112,19 @@ let game = null;
 let viewingRound = null;
 let setupCardsPerRound = null;
 let settingsCardsPerRound = null;
+let setupScheduleBuildKey = null;
+let settingsScheduleBuildKey = null;
 const EXPANSION_BONUS_KEYS = new Set(EXPANSION_BONUS_FIELDS.map((field) => field.key));
+
+function getScheduleBuildKey(config, totalRounds) {
+  return [
+    config.numPlayers,
+    config.useExpansion,
+    totalRounds,
+    config.startingCards,
+    config.cardIncrement,
+  ].join("|");
+}
 
 function getTotalRounds() {
   return game?.totalRounds ?? DEFAULT_TOTAL_ROUNDS;
@@ -149,27 +161,41 @@ function readScheduleConfig(scheduleEls) {
 
 function renderRoundSchedule({ preserveCustom = true, scheduleEls = setupScheduleEls, cardsCacheKey = "setup" } = {}) {
   const config = readScheduleConfig(scheduleEls);
-  const maxCards = getMaxCardsPerRound(config.numPlayers, config.useExpansion);
   const totalRounds = Math.max(1, Math.min(20, config.totalRounds || DEFAULT_TOTAL_ROUNDS));
+  const playerCount = config.numPlayers;
+  const schedulePlayerCount = Math.max(playerCount, 2);
+  const maxCards = getMaxCardsPerRound(schedulePlayerCount, config.useExpansion);
+  const buildKey = getScheduleBuildKey(config, totalRounds);
+  const cachedCards =
+    cardsCacheKey === "settings" ? settingsCardsPerRound : setupCardsPerRound;
+  const cachedBuildKey =
+    cardsCacheKey === "settings" ? settingsScheduleBuildKey : setupScheduleBuildKey;
 
   scheduleEls.totalRoundsInput.value = totalRounds;
 
   let cardsPerRound = buildDefaultCardsPerRound({
     ...config,
     totalRounds,
+    numPlayers: schedulePlayerCount,
   });
 
-  const cachedCards =
-    cardsCacheKey === "settings" ? settingsCardsPerRound : setupCardsPerRound;
-
-  if (preserveCustom && cachedCards && cachedCards.length === totalRounds) {
-    cardsPerRound = applyDeckCap(cachedCards, config.numPlayers, config.useExpansion);
+  if (
+    preserveCustom &&
+    cachedCards &&
+    cachedCards.length === totalRounds &&
+    cachedBuildKey === buildKey
+  ) {
+    cardsPerRound = applyDeckCap(cachedCards, schedulePlayerCount, config.useExpansion);
   }
 
-  if (cardsCacheKey === "settings") {
-    settingsCardsPerRound = cardsPerRound;
-  } else {
-    setupCardsPerRound = cardsPerRound;
+  if (playerCount >= 2) {
+    if (cardsCacheKey === "settings") {
+      settingsCardsPerRound = cardsPerRound;
+      settingsScheduleBuildKey = buildKey;
+    } else {
+      setupCardsPerRound = cardsPerRound;
+      setupScheduleBuildKey = buildKey;
+    }
   }
 
   scheduleEls.roundScheduleEl.innerHTML = cardsPerRound
@@ -178,7 +204,7 @@ function renderRoundSchedule({ preserveCustom = true, scheduleEls = setupSchedul
       const capped = desired > maxCards;
       return `
         <label class="round-schedule-item${capped ? " capped" : ""}">
-          <span>R${index + 1}</span>
+          <span class="round-schedule-round">Round ${index + 1}</span>
           <input
             type="number"
             min="1"
@@ -187,13 +213,20 @@ function renderRoundSchedule({ preserveCustom = true, scheduleEls = setupSchedul
             data-round-index="${index}"
             aria-label="Cards dealt in round ${index + 1}"
           />
+          <span class="round-schedule-unit">cards each</span>
         </label>
       `;
     })
     .join("");
 
   const deckLabel = config.useExpansion ? "expanded" : "base";
-  scheduleEls.deckLimitHint.textContent = `${config.numPlayers} players · ${getDeckSize(config.useExpansion)}-card ${deckLabel} deck · up to ${maxCards} card${maxCards === 1 ? "" : "s"} per player per round`;
+  let hint = `${getDeckSize(config.useExpansion)}-card ${deckLabel} deck · up to ${maxCards} cards per player per round`;
+
+  if (playerCount < 2) {
+    hint = `Add at least 2 players to lock in the deal schedule. Preview below assumes ${schedulePlayerCount} players. ${hint}`;
+  } else {
+    hint = `${playerCount} players · ${hint}`;
+  }
 
   const anyCapped = cardsPerRound.some((cards, index) => {
     const desired = config.startingCards + index * config.cardIncrement;
@@ -201,8 +234,10 @@ function renderRoundSchedule({ preserveCustom = true, scheduleEls = setupSchedul
   });
 
   if (anyCapped) {
-    scheduleEls.deckLimitHint.textContent += " · * rounds capped to fit the deck";
+    hint += " · * rounds capped to fit the deck";
   }
+
+  scheduleEls.deckLimitHint.textContent = hint;
 }
 
 function readSetupRoundConfig() {
@@ -285,6 +320,18 @@ function loadGame() {
   }
 }
 
+function getGameSnapshot() {
+  if (game) return game;
+  const saved = loadGame();
+  return saved ? normalizeSavedGame(saved) : null;
+}
+
+function archiveToHistory({ endedEarly = true } = {}) {
+  const snapshot = getGameSnapshot();
+  if (!snapshot) return false;
+  return tryRecordGameHistory(snapshot, { endedEarly });
+}
+
 function clearGame() {
   localStorage.removeItem(gameStorageKey());
   game = null;
@@ -362,6 +409,12 @@ function populateGameSettingsForm() {
   settingsScheduleEls.cardIncrementInput.value = cardIncrement;
 
   renderSettingsPlayerInputs();
+  const settingsConfig = readScheduleConfig(settingsScheduleEls);
+  const settingsTotalRounds = Math.max(
+    1,
+    Math.min(20, Number(settingsScheduleEls.totalRoundsInput.value) || DEFAULT_TOTAL_ROUNDS)
+  );
+  settingsScheduleBuildKey = getScheduleBuildKey(settingsConfig, settingsTotalRounds);
   renderRoundSchedule({
     preserveCustom: true,
     scheduleEls: settingsScheduleEls,
@@ -609,6 +662,32 @@ function renderRoundDetail() {
     .join("");
 }
 
+function createRoundPreviewPill(roundNum, { scored = false, isCurrent = false, isViewing = false } = {}) {
+  const cardsDealt = getCardsForRound(roundNum);
+  const cardsLabel = `${cardsDealt} card${cardsDealt === 1 ? "" : "s"}`;
+
+  const pill = document.createElement(scored ? "button" : "span");
+  pill.className = "round-preview-pill";
+  if (scored) {
+    pill.type = "button";
+    pill.classList.add("done");
+  }
+  if (isCurrent) pill.classList.add("current");
+  if (isViewing) pill.classList.add("viewing");
+
+  const roundLabel = document.createElement("span");
+  roundLabel.className = "round-preview-round";
+  roundLabel.textContent = `R${roundNum}`;
+
+  const dealLabel = document.createElement("span");
+  dealLabel.className = "round-preview-cards";
+  dealLabel.textContent = cardsLabel;
+
+  pill.append(roundLabel, dealLabel);
+  pill.title = `Round ${roundNum} · ${cardsLabel} dealt to each player`;
+  return pill;
+}
+
 function renderRoundPreview(container) {
   if (!container) return;
 
@@ -617,26 +696,13 @@ function renderRoundPreview(container) {
     const scored = isRoundScored(r);
     const isCurrent = r === game.currentRound && !game.completed;
     const isViewing = viewingRound === r;
-    const cardsDealt = getCardsForRound(r);
+    const pill = createRoundPreviewPill(r, { scored, isCurrent, isViewing });
 
     if (scored) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = `R${r}`;
-      button.className = "done";
-      if (isCurrent) button.classList.add("current");
-      if (isViewing) button.classList.add("viewing");
-      button.title = `View Round ${r} (${cardsDealt} card${cardsDealt === 1 ? "" : "s"})`;
-      button.addEventListener("click", () => openRoundDetail(r));
-      container.append(button);
-      continue;
+      pill.addEventListener("click", () => openRoundDetail(r));
     }
 
-    const span = document.createElement("span");
-    span.textContent = `R${r}`;
-    span.title = `${cardsDealt} card${cardsDealt === 1 ? "" : "s"}`;
-    if (isCurrent) span.classList.add("current");
-    container.append(span);
+    container.append(pill);
   }
 }
 
@@ -859,6 +925,7 @@ function undoLastRound() {
 function initSetupView() {
   viewingRound = null;
   setupCardsPerRound = null;
+  setupScheduleBuildKey = null;
   roundDetailView.classList.add("hidden");
   totalRoundsInput.value = DEFAULT_TOTAL_ROUNDS;
   startingCardsInput.value = DEFAULT_STARTING_CARDS;
@@ -934,6 +1001,10 @@ document.getElementById("sk-start-game-btn").addEventListener("click", () => {
 roundScheduleEl.addEventListener("input", (event) => {
   if (!event.target.matches("input[data-round-index]")) return;
   setupCardsPerRound = readSetupCardsPerRound();
+  setupScheduleBuildKey = getScheduleBuildKey(
+    readScheduleConfig(setupScheduleEls),
+    Math.max(1, Math.min(20, Number(totalRoundsInput.value) || DEFAULT_TOTAL_ROUNDS))
+  );
 });
 
 [
@@ -954,6 +1025,13 @@ roundScheduleEl.addEventListener("input", (event) => {
 settingsScheduleEls.roundScheduleEl.addEventListener("input", (event) => {
   if (!event.target.matches("input[data-round-index]")) return;
   settingsCardsPerRound = readCardsPerRoundFromSchedule(settingsScheduleEls);
+  settingsScheduleBuildKey = getScheduleBuildKey(
+    readScheduleConfig(settingsScheduleEls),
+    Math.max(
+      1,
+      Math.min(20, Number(settingsScheduleEls.totalRoundsInput.value) || DEFAULT_TOTAL_ROUNDS)
+    )
+  );
 });
 
 document.getElementById("sk-game-settings-btn").addEventListener("click", openGameSettings);
@@ -995,6 +1073,7 @@ export function createSkullKingApp(shell) {
     loadSavedGame,
     initSetupView,
     clearGame,
+    archiveToHistory,
     hasSavedGame: () => Boolean(localStorage.getItem(gameStorageKey())),
     onSetupVisible: () => {
       setupPlayerPicker?.refreshProfiles?.();

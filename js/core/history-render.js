@@ -94,9 +94,10 @@ export function createHistoryEntryElement(entry, options = {}) {
 
   const date = document.createElement("p");
   date.className = "hint history-entry-date";
-  date.textContent = compact
+  const dateText = compact
     ? formatHistoryDateShort(entry.completedAt)
     : formatHistoryDate(entry.completedAt);
+  date.textContent = entry.meta?.endedEarly ? `${dateText} · ended early` : dateText;
 
   titleRow.append(title, date);
   header.append(titleRow);

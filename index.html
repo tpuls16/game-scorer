@@ -173,6 +173,13 @@
       <section id="home-view" class="card">
         <h2>Which game are you playing?</h2>
         <p class="hint">Pick a game below. More scorekeepers will be added over time.</p>
+        <div id="active-game-resume" class="active-game-resume hidden">
+          <div class="active-game-resume-body">
+            <p class="active-game-resume-label">Game in progress</p>
+            <p id="active-game-resume-summary" class="active-game-resume-summary"></p>
+          </div>
+          <button type="button" id="active-game-resume-btn" class="btn btn-primary">Resume</button>
+        </div>
         <div id="game-picker" class="game-picker"></div>
       </section>
 
@@ -280,6 +287,7 @@
                 <input type="number" id="card-increment" min="0" max="20" value="1" />
               </label>
             </div>
+            <p class="hint">Cards dealt to each player every round. Adjust Start with / Add each round, or edit any round below.</p>
             <p id="deck-limit-hint" class="hint"></p>
             <div id="round-schedule" class="round-schedule"></div>
           </div>
@@ -388,6 +396,11 @@
 
       <!-- Active games -->
       <section id="game-view" class="hidden">
+        <div class="view-toolbar game-view-toolbar">
+          <button type="button" id="pause-to-home-btn" class="btn btn-secondary btn-back">
+            ← Main menu
+          </button>
+        </div>
         <div id="skull-king-game-panel" class="game-panel hidden">
           <div id="leader-banner" class="leader-banner hidden"></div>
           <div class="card">
@@ -417,7 +430,7 @@
           </div>
           <div class="btn-row game-actions">
             <button type="button" id="sk-game-settings-btn" class="btn btn-secondary">Game Settings</button>
-            <button type="button" id="sk-new-game-btn" class="btn btn-danger">New Game</button>
+            <button type="button" id="sk-new-game-btn" class="btn btn-danger">End game</button>
           </div>
         </div>
 
@@ -462,7 +475,7 @@
           </div>
           <div class="btn-row game-actions">
             <button type="button" id="flip7-game-settings-btn" class="btn btn-secondary">Game Settings</button>
-            <button type="button" id="flip7-new-game-btn" class="btn btn-danger">New Game</button>
+            <button type="button" id="flip7-new-game-btn" class="btn btn-danger">End game</button>
           </div>
         </div>
 
@@ -514,7 +527,7 @@
           <div class="btn-row game-actions">
             <button type="button" id="rook-game-settings-btn" class="btn btn-secondary">Game Settings</button>
             <button type="button" id="rook-end-game-btn" class="btn btn-secondary">End game</button>
-            <button type="button" id="rook-new-game-btn" class="btn btn-danger">New Game</button>
+            <button type="button" id="rook-new-game-btn" class="btn btn-danger">End game</button>
           </div>
         </div>
       </section>
@@ -641,6 +654,7 @@
               <input type="number" id="settings-card-increment" min="0" max="20" value="1" />
             </label>
           </div>
+          <p class="hint">Cards dealt to each player every round.</p>
           <p id="settings-deck-limit-hint" class="hint"></p>
           <div id="settings-round-schedule" class="round-schedule"></div>
         </div>
@@ -730,6 +744,28 @@
         </div>
         <div class="btn-row settings-dialog-actions account-settings-footer">
           <button type="button" id="account-settings-sign-out-all-btn" class="btn btn-secondary hidden">Remove all saved logins</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="profile-delete-dialog" class="confirm-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="profile-delete-title">
+      <div class="confirm-dialog-backdrop" data-profile-delete-dismiss></div>
+      <div class="confirm-dialog-panel card">
+        <div id="profile-delete-step-1">
+          <h2 id="profile-delete-title">Remove saved player?</h2>
+          <p id="profile-delete-step1-message"></p>
+          <div class="btn-row confirm-dialog-actions">
+            <button type="button" id="profile-delete-cancel-btn" class="btn btn-secondary">Cancel</button>
+            <button type="button" id="profile-delete-continue-btn" class="btn btn-secondary">Continue</button>
+          </div>
+        </div>
+        <div id="profile-delete-step-2" class="hidden">
+          <h2 id="profile-delete-confirm-title">Confirm deletion</h2>
+          <p id="profile-delete-step2-message"></p>
+          <div class="btn-row confirm-dialog-actions">
+            <button type="button" id="profile-delete-back-btn" class="btn btn-secondary">Go back</button>
+            <button type="button" id="profile-delete-confirm-btn" class="btn btn-danger">Delete player</button>
+          </div>
         </div>
       </div>
     </div>

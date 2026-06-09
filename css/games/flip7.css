@@ -175,6 +175,17 @@ body[data-theme="flip7"] .flip7-pick-btn.is-selected {
   color: #fff;
 }
 
+body[data-theme="flip7"] .flip7-pick-btn:disabled,
+body[data-theme="flip7"] .flip7-pick-btn.is-locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+body[data-theme="flip7"] .flip7-pick-btn:disabled:hover,
+body[data-theme="flip7"] .flip7-pick-btn.is-locked:hover {
+  border-color: var(--border);
+}
+
 body[data-theme="flip7"] .flip7-mod-x2.is-selected {
   background: linear-gradient(135deg, #00d4ff, #7b2ff7);
 }
